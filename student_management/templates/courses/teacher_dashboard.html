@@ -1,0 +1,536 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teacher Dashboard - Student Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Clean Teacher Dashboard - Updated Style */
+.teacher-dashboard {
+    padding: 20px 0;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Clean Welcome Header */
+.welcome-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+    text-align: center;
+}
+
+.welcome-header h1 {
+    margin: 0 0 10px 0;
+    font-size: 2.2rem;
+    font-weight: 600;
+}
+
+.welcome-header p {
+    margin: 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Quick Stats - Box Style */
+.stats-row {
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Avatar style exactly like student list */
+.stat-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.stat-avatar.books {
+    background-color: #007bff;
+}
+
+.stat-avatar.tasks {
+    background-color: #17a2b8;
+}
+
+.stat-avatar.clock {
+    background-color: #28a745;
+}
+
+.stat-avatar.graduation {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #007bff;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Clean Content Section */
+.content-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px;
+}
+
+.section-title-clean {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title-clean::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: #007bff;
+}
+
+/* Subject List - Student List Style */
+.subjects-list {
+    margin: 0;
+}
+
+.subject-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.subject-item:last-child {
+    border-bottom: none;
+}
+
+.subject-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding-left: 15px;
+    padding-right: 15px;
+    transition: all 0.2s ease;
+}
+
+.subject-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.subject-name {
+    font-size: 1rem;
+    color: #333;
+    margin: 0;
+}
+
+.btn-group .btn {
+    border-radius: 0.25rem;
+    margin-right: 2px;
+}
+
+/* Custom purple outline button */
+.btn-outline-purple {
+    color: #6f42c1;
+    border-color: #6f42c1;
+    background-color: transparent;
+}
+
+.btn-outline-purple:hover {
+    color: #fff;
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+}
+
+.btn-outline-purple:focus, .btn-outline-purple.focus {
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+}
+
+/* Activity Sidebar */
+.activity-sidebar {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    height: fit-content;
+}
+
+.activity-item {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border-left: 4px solid #007bff;
+}
+
+.activity-item:last-child {
+    margin-bottom: 0;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.activity-meta {
+    color: #6c757d;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: #6c757d;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 20px;
+}
+
+.empty-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 10px;
+}
+
+.empty-message {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Setup Warning */
+.setup-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffeaa7;
+    border-radius: 15px;
+    padding: 40px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.setup-icon {
+    font-size: 4rem;
+    color: #856404;
+    margin-bottom: 20px;
+}
+
+.setup-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #856404;
+    margin-bottom: 15px;
+}
+
+.setup-message {
+    color: #856404;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+.setup-steps {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.step-item:last-child {
+    margin-bottom: 0;
+}
+
+.step-number {
+    width: 35px;
+    height: 35px;
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.step-content h6 {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.step-content small {
+    color: #6c757d;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .teacher-dashboard .row {
+        margin: 0;
+    }
+    
+    .subjects-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .welcome-header {
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .welcome-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .subject-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .setup-warning {
+        padding: 25px;
+    }
+    
+    .main-content {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="teacher-dashboard">
+    <div class="container">
+        <!-- Clean Welcome Header -->
+        <div class="welcome-header">
+            <h1><i class="fas fa-chalkboard-teacher me-2"></i>Teacher Dashboard</h1>
+            <p>
+                {% if teacher %}
+                    Welcome back, {{ teacher.full_name }}!
+                {% else %}
+                    Welcome to BCA Course Management
+                {% endif %}
+            </p>
+        </div>
+
+        {% if not teacher %}
+        <!-- Setup Warning -->
+        <div class="setup-warning">
+            <div class="setup-icon">
+                <i class="fas fa-user-cog"></i>
+            </div>
+            <h2 class="setup-title">Teacher Profile Setup Required</h2>
+            <p class="setup-message">You need a teacher profile to access course management features.</p>
+            
+            <div class="setup-steps">
+                <h5 class="text-center mb-4">Setup Process:</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h6>Profile Creation</h6>
+                                <small>Administrator creates your teacher profile</small>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h6>Subject Assignment</h6>
+                                <small>Get assigned to BCA subjects you'll teach</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h6>Course Management</h6>
+                                <small>Upload materials and create assignments</small>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h6>Start Teaching</h6>
+                                <small>Begin managing courses and students</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="text-center mt-4 mb-0">
+                <i class="fas fa-envelope me-2"></i>
+                Contact administrator at <strong>admin@college.edu</strong> for setup
+            </p>
+        </div>
+
+        {% else %}
+        <!-- Quick Stats -->
+        <div class="row stats-row">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card">
+                    <div class="stat-avatar books rounded-circle">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-number">{{ assigned_subjects.count }}</div>
+                    <p class="stat-label">Subjects Teaching</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card">
+                    <div class="stat-avatar tasks rounded-circle">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="stat-number">{{ recent_assignments|length }}</div>
+                    <p class="stat-label">Active Assignments</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card">
+                    <div class="stat-avatar clock rounded-circle">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-number">{{ pending_submissions }}</div>
+                    <p class="stat-label">Pending Submissions</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-card">
+                    <div class="stat-avatar graduation rounded-circle">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="stat-number">8</div>
+                    <p class="stat-label">BCA Semesters</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clean Main Content -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-book me-2"></i>Your BCA Subjects
+                    {% if assigned_subjects %}
+                        <span class="badge bg-primary ms-2">{{ assigned_subjects.count }} Total</span>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if assigned_subjects %}
+                    <div class="subjects-list">
+                        {% for subject_data in subjects_with_counts %}
+                        <div class="subject-item">
+                            <div class="d-flex align-items-center">
+                                <div class="subject-avatar bg-primary rounded-circle text-white d-flex align-items-center justify-content-center me-3">
+                                    <i class="fas fa-code"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div>
+                                        <strong class="subject-name">{{ subject_data.subject.subject_name }}</strong>
+                                        <small class="text-muted d-block">{{ subject_data.subject.subject_code }}</small>
+                                    </div>
+                                </div>
+                                <div class="me-3">
+                                    <span class="badge bg-success">Sem {{ subject_data.subject.semester }}</span>
+                                </div>
+                                <div class="me-3">
+                                    <!-- Red area - Active Assignment (non-clickable) -->
+                                    <span class="text-danger fw-bold">
+                                        <i class="fas fa-tasks"></i> Active Assignment ({{ subject_data.active_count }})
+                                    </span>
+                                </div>
+                                <div class="me-3">
+                                    <!-- Green area - Pending Submission (non-clickable) -->
+                                    <span class="text-success fw-bold">
+                                        <i class="fas fa-clock"></i> Pending Submission ({{ subject_data.pending_count }})
+                                    </span>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'courses:subject-detail' subject_data.subject.subject_code %}" 
+                                       class="btn btn-sm btn-outline-info" title="View Details">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="{% url 'courses:subject-students' subject_data.subject.subject_code %}" 
+                                       class="btn btn-sm btn-outline-primary" title="View Students">
+                                        <i class="fas fa-users"></i> Students
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Subjects Assigned</h5>
+                        <p class="text-muted">Contact administrator to get assigned to BCA subjects</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

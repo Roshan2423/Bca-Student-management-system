@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mark Student Attendance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .attendance-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: none;
+        margin-bottom: 20px;
+    }
+    
+    .student-row {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .student-row.present {
+        border-color: #28a745;
+        background-color: #f8fff9;
+    }
+    
+    .student-row.absent {
+        border-color: #dc3545;
+        background-color: #fff5f5;
+    }
+    
+    .btn-attendance {
+        border-radius: 20px;
+        padding: 8px 20px;
+        margin: 2px;
+        font-weight: 600;
+    }
+    
+    .header-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .student-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="header-section">
+        <h1 class="mb-3">
+            <i class="fas fa-user-graduate fa-2x me-3"></i>
+            Mark Student Attendance
+        </h1>
+        <h4>
+            {% if selected_date %}
+                {{ selected_date|date:"F d, Y - l" }}
+            {% else %}
+                {{ now|date:"F d, Y - l" }}
+            {% endif %}
+        </h4>
+        {% if total_students %}
+        <div class="row justify-content-center mt-4">
+            <div class="col-auto">
+                <span class="badge bg-light text-dark fs-6 me-2">
+                    <i class="fas fa-users me-1"></i>{{ total_students }} Total
+                </span>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-success fs-6 me-2">
+                    <i class="fas fa-check me-1"></i>{{ present_students|default:0 }} Present
+                </span>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-danger fs-6">
+                    <i class="fas fa-times me-1"></i>{{ absent_students|default:0 }} Absent
+                </span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Semester & Date Selector -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="attendance-card">
+                <div class="card-body">
+                    <h5 class="text-center mb-3">
+                        <i class="fas fa-calendar-alt me-2"></i>Select Semester and Date
+                    </h5>
+                    <form method="get" class="d-flex flex-wrap justify-content-center gap-3">
+                        <!-- Semester Dropdown -->
+                        <select name="semester" class="form-select" required style="max-width: 180px;">
+                            <option value="" {% if not selected_semester %}selected{% endif %}>Select Semester</option>
+                            {% for sem in all_semesters %}
+                                <option value="{{ sem }}" {% if selected_semester == sem|stringformat:"s" %}selected{% endif %}>Semester {{ sem }}</option>
+                            {% endfor %}
+                        </select>
+                        <!-- Date Picker -->
+                        <input type="date"
+                               name="date"
+                               value="{{ selected_date }}"
+                               class="form-control"
+                               style="max-width: 200px;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sync-alt me-2"></i>Load
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if selected_semester %}
+        {% if student_list %}
+        <!-- Attendance Form -->
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="semester" value="{{ selected_semester }}">
+            <input type="hidden" name="attendance_date" value="{{ selected_date }}">
+            
+            <div class="attendance-card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-list-check me-2"></i>Student List (Semester {{ selected_semester }})
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for student_data in student_list %}
+                        <div class="col-lg-6 col-xl-4">
+                            <div class="student-row 
+                                {% if student_data.current_status == True %}present
+                                {% elif student_data.current_status == False %}absent{% endif %}">
+                                
+                                <div class="row align-items-center">
+                                    <!-- Student Avatar -->
+                                    <div class="col-2">
+                                        <div class="student-avatar">
+                                            {{ student_data.student.first_name|first }}{{ student_data.student.last_name|first }}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Student Info -->
+                                    <div class="col-6">
+                                        <h6 class="mb-1 fw-bold">
+                                            {{ student_data.student.first_name }} {{ student_data.student.last_name }}
+                                        </h6>
+                                        <small class="text-muted">{{ student_data.student.student_id }}</small><br>
+                                        <small class="text-muted">Semester {{ student_data.student.current_semester }}</small>
+                                    </div>
+                                    
+                                    <!-- Attendance Buttons -->
+                                    <div class="col-4">
+                                        <div class="btn-group-vertical w-100" role="group">
+                                            <input type="radio" 
+                                                   class="btn-check" 
+                                                   name="attendance_{{ student_data.student.student_id }}" 
+                                                   id="present_{{ student_data.student.student_id }}" 
+                                                   value="present"
+                                                   {% if student_data.current_status == True %}checked{% endif %}>
+                                            <label class="btn btn-outline-success btn-sm btn-attendance" 
+                                                   for="present_{{ student_data.student.student_id }}">
+                                                <i class="fas fa-check me-1"></i>Present
+                                            </label>
+
+                                            <input type="radio" 
+                                                   class="btn-check" 
+                                                   name="attendance_{{ student_data.student.student_id }}" 
+                                                   id="absent_{{ student_data.student.student_id }}" 
+                                                   value="absent"
+                                                   {% if student_data.current_status == False %}checked{% endif %}>
+                                            <label class="btn btn-outline-danger btn-sm btn-attendance" 
+                                                   for="absent_{{ student_data.student.student_id }}">
+                                                <i class="fas fa-times me-1"></i>Absent
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Notes -->
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <input type="text" 
+                                               class="form-control form-control-sm" 
+                                               name="notes_{{ student_data.student.student_id }}" 
+                                               placeholder="Optional notes..."
+                                               style="font-size: 0.8rem;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success btn-lg px-5">
+                            <i class="fas fa-save me-2"></i>Save Attendance
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% else %}
+            <div class="alert alert-warning mt-3 text-center">
+                No students found for the selected semester.
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- Navigation -->
+    <div class="text-center mt-4">
+        <a href="{% url 'attendance:dashboard' %}" class="btn btn-outline-secondary btn-lg me-3">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <a href="{% url 'attendance:reports' %}" class="btn btn-outline-info btn-lg">
+            <i class="fas fa-chart-bar me-2"></i>View Reports
+        </a>
+    </div>
+</div>
+{% endblock %}

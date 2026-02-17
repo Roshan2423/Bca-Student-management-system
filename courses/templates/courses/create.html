@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% if course %}Edit Course{% else %}Add New Course{% endif %} - Student Management System
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-book me-2"></i>
+                {% if course %}Edit Course{% else %}Add New Course{% endif %}
+            </h2>
+            <p class="text-muted mb-0">
+                {% if course %}Update course information{% else %}Create a new course{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'courses:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Courses
+        </a>
+    </div>
+
+    <!-- Course Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Course Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Display Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="course_code" class="form-label">Course Code *</label>
+                                <input type="text" class="form-control" id="course_code" name="course_code" 
+                                       value="{% if course %}{{ course.course_code }}{% endif %}" 
+                                       placeholder="e.g., CS101, MATH201" required>
+                                <div class="form-text">Unique identifier for the course</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="credits" class="form-label">Credits *</label>
+                                <input type="number" class="form-control" id="credits" name="credits" 
+                                       value="{% if course %}{{ course.credits }}{% else %}3{% endif %}" 
+                                       min="1" max="10" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="course_name" class="form-label">Course Name *</label>
+                            <input type="text" class="form-control" id="course_name" name="course_name" 
+                                   value="{% if course %}{{ course.course_name }}{% endif %}" 
+                                   placeholder="e.g., Introduction to Programming" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="course_description" class="form-label">Course Description</label>
+                            <textarea class="form-control" id="course_description" name="course_description" 
+                                      rows="3" placeholder="Brief description of the course">{% if course %}{{ course.course_description }}{% endif %}</textarea>
+                        </div>
+
+                        <!-- Academic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <label for="program" class="form-label">Program *</label>
+                                <select class="form-select" id="program" name="program" required>
+                                    <option value="">Select Program</option>
+                                    <option value="BCA" {% if course and course.program == 'BCA' %}selected{% endif %}>BCA</option>
+                                    <option value="BIT" {% if course and course.program == 'BIT' %}selected{% endif %}>BIT</option>
+                                    <option value="MBA" {% if course and course.program == 'MBA' %}selected{% endif %}>MBA</option>
+                                    <option value="MCA" {% if course and course.program == 'MCA' %}selected{% endif %}>MCA</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="semester" class="form-label">Semester *</label>
+                                <select class="form-select" id="semester" name="semester" required>
+                                    <option value="">Select Semester</option>
+                                    {% for i in "12345678" %}
+                                    <option value="{{ i }}" {% if course and course.semester == i %}selected{% endif %}>
+                                        Semester {{ i }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="course_type" class="form-label">Course Type</label>
+                                <select class="form-select" id="course_type" name="course_type">
+                                    <option value="core" {% if course and course.course_type == 'core' %}selected{% endif %}>Core</option>
+                                    <option value="elective" {% if course and course.course_type == 'elective' %}selected{% endif %}>Elective</option>
+                                    <option value="practical" {% if course and course.course_type == 'practical' %}selected{% endif %}>Practical</option>
+                                    <option value="project" {% if course and course.course_type == 'project' %}selected{% endif %}>Project</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="academic_year" class="form-label">Academic Year</label>
+                                <input type="text" class="form-control" id="academic_year" name="academic_year" 
+                                       value="{% if course %}{{ course.academic_year }}{% else %}2024-25{% endif %}" 
+                                       placeholder="2024-25">
+                            </div>
+                        </div>
+
+                        <!-- Teacher Assignment -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="teacher" class="form-label">Assign Teacher *</label>
+                                <select class="form-select" id="teacher" name="teacher" required>
+                                    <option value="">Select Teacher</option>
+                                    {% for teacher in teachers %}
+                                    <option value="{{ teacher.teacher_id }}" 
+                                            {% if course and course.teacher.teacher_id == teacher.teacher_id %}selected{% endif %}>
+                                        {{ teacher.full_name }} - {{ teacher.department }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="classroom" class="form-label">Classroom</label>
+                                <input type="text" class="form-control" id="classroom" name="classroom" 
+                                       value="{% if course %}{{ course.classroom }}{% endif %}" 
+                                       placeholder="e.g., Room 101">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="max_students" class="form-label">Max Students</label>
+                                <input type="number" class="form-control" id="max_students" name="max_students" 
+                                       value="{% if course %}{{ course.max_students }}{% else %}50{% endif %}" 
+                                       min="1" max="200">
+                            </div>
+                        </div>
+
+                        <!-- Assessment Structure -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">Assessment Structure</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="theory_marks" class="form-label">Theory Marks</label>
+                                        <input type="number" class="form-control" id="theory_marks" name="theory_marks" 
+                                               value="{% if course %}{{ course.theory_marks }}{% else %}70{% endif %}" 
+                                               min="0" max="100">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="practical_marks" class="form-label">Practical Marks</label>
+                                        <input type="number" class="form-control" id="practical_marks" name="practical_marks" 
+                                               value="{% if course %}{{ course.practical_marks }}{% else %}30{% endif %}" 
+                                               min="0" max="100">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="internal_marks" class="form-label">Internal Marks</label>
+                                        <input type="number" class="form-control" id="internal_marks" name="internal_marks" 
+                                               value="{% if course %}{{ course.internal_marks }}{% else %}40{% endif %}" 
+                                               min="0" max="100">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="external_marks" class="form-label">External Marks</label>
+                                        <input type="number" class="form-control" id="external_marks" name="external_marks" 
+                                               value="{% if course %}{{ course.external_marks }}{% else %}60{% endif %}" 
+                                               min="0" max="100">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Syllabus -->
+                        <div class="mb-4">
+                            <label for="syllabus" class="form-label">Syllabus/Course Outline</label>
+                            <textarea class="form-control" id="syllabus" name="syllabus" rows="5" 
+                                      placeholder="Detailed course syllabus and learning objectives">{% if course %}{{ course.syllabus }}{% endif %}</textarea>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                       {% if not course or course.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Course is Active
+                                </label>
+                                <div class="form-text">Inactive courses won't be available for enrollment</div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>
+                                {% if course %}Update Course{% else %}Create Course{% endif %}
+                            </button>
+                            <a href="{% url 'courses:list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            {% if course %}
+                            <a href="{% url 'courses:detail' course.course_code %}" class="btn btn-outline-info">
+                                <i class="fas fa-eye me-2"></i>View Details
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Course Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">Course Code Format</h6>
+                    <ul class="list-unstyled mb-3">
+                        <li><strong>CS101</strong> - Computer Science, 1st year</li>
+                        <li><strong>MATH201</strong> - Mathematics, 2nd year</li>
+                        <li><strong>BUS301</strong> - Business, 3rd year</li>
+                    </ul>
+
+                    <h6 class="text-success">Credit Guidelines</h6>
+                    <ul class="list-unstyled mb-3">
+                        <li><strong>1-2 Credits:</strong> Practical/Lab courses</li>
+                        <li><strong>3 Credits:</strong> Regular theory courses</li>
+                        <li><strong>4-6 Credits:</strong> Major core subjects</li>
+                    </ul>
+
+                    <h6 class="text-info">Assessment Tips</h6>
+                    <ul class="list-unstyled">
+                        <li>• Total marks = Theory + Practical</li>
+                        <li>• Internal + External = Total marks</li>
+                        <li>• Common: 40% internal, 60% external</li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if teachers.count == 0 %}
+            <div class="card mt-3">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle text-warning fa-2x mb-2"></i>
+                    <h6>No Teachers Available</h6>
+                    <p class="text-muted">You need to add teachers first</p>
+                    <a href="{% url 'courses:teacher-add' %}" class="btn btn-warning btn-sm">
+                        Add Teacher
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-generate course code based on program and course name
+document.addEventListener('DOMContentLoaded', function() {
+    const programSelect = document.getElementById('program');
+    const courseNameInput = document.getElementById('course_name');
+    const courseCodeInput = document.getElementById('course_code');
+    
+    function generateCourseCode() {
+        const program = programSelect.value;
+        const courseName = courseNameInput.value;
+        
+        if (program && courseName && !courseCodeInput.value) {
+            const words = courseName.split(' ');
+            const abbreviation = words.map(word => word.charAt(0)).join('').toUpperCase();
+            const randomNum = Math.floor(Math.random() * 900) + 100;
+            courseCodeInput.value = `${program}${randomNum}`;
+        }
+    }
+    
+    programSelect.addEventListener('change', generateCourseCode);
+    courseNameInput.addEventListener('blur', generateCourseCode);
+});
+
+// Validate marks total
+function validateMarks() {
+    const theory = parseInt(document.getElementById('theory_marks').value) || 0;
+    const practical = parseInt(document.getElementById('practical_marks').value) || 0;
+    const internal = parseInt(document.getElementById('internal_marks').value) || 0;
+    const external = parseInt(document.getElementById('external_marks').value) || 0;
+    
+    const totalMarks = theory + practical;
+    const totalAssessment = internal + external;
+    
+    if (totalMarks !== totalAssessment) {
+        console.warn(`Total marks mismatch: ${totalMarks} vs ${totalAssessment}`);
+    }
+}
+
+// Add event listeners for mark validation
+['theory_marks', 'practical_marks', 'internal_marks', 'external_marks'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', validateMarks);
+});
+</script>
+{% endblock %}

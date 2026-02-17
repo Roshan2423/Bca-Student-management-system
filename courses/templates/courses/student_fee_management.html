@@ -1,0 +1,543 @@
+<!-- Create: courses/templates/courses/student_fee_management.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Student Fee Management - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-money-bill-wave text-warning"></i> Student Fee Management
+                    </h1>
+                    <p class="text-muted">Track and manage student fee payments (Rs.50,000 per semester)</p>
+                </div>
+                <div>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card shadow h-100 py-2" style="border-left: 0.25rem solid #4e73df;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Students
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #5a5c69;">
+                                {{ total_students }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x" style="color: #dddfeb;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card shadow h-100 py-2" style="border-left: 0.25rem solid #1cc88a;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Collected Revenue
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #5a5c69;">
+                                Rs.{{ total_collected_revenue|floatformat:0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-rupee-sign fa-2x" style="color: #dddfeb;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card shadow h-100 py-2" style="border-left: 0.25rem solid #36b9cc;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Expected Revenue
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #5a5c69;">
+                                Rs.{{ total_expected_revenue|floatformat:0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-area fa-2x" style="color: #dddfeb;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card shadow h-100 py-2" style="border-left: 0.25rem solid #f6c23e;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Collection Rate
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #5a5c69;">
+                                {{ collection_percentage }}%
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x" style="color: #dddfeb;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-filter"></i> Filters
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="search" 
+                           placeholder="Search by name or student ID..." 
+                           value="{{ search_query }}">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="semester">
+                        <option value="">All Semesters</option>
+                        {% for i in "12345678" %}
+                            <option value="{{ i }}" {% if semester_filter == i %}selected{% endif %}>
+                                Semester {{ i }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="status">
+                        <option value="">All Status</option>
+                        <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>
+                            Pending Payments
+                        </option>
+                        <option value="completed" {% if status_filter == "completed" %}selected{% endif %}>
+                            Fully Paid
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Fee Records Table -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list"></i> Student Fee Records
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if student_fee_data %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Current Semester</th>
+                                <th>Fee Breakdown</th>
+                                <th>Total Paid</th>
+                                <th>Completion</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in student_fee_data %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>{{ data.student.full_name }}</strong><br>
+                                        <small class="text-muted">{{ data.student.student_id }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        Semester {{ data.student.current_semester }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for fee_record in data.fee_records %}
+                                            <span class="badge {% if fee_record.is_completed %}bg-success{% elif fee_record.paid_amount > 0 %}bg-warning{% else %}bg-secondary{% endif %}" 
+                                                  {% if fee_record.notes %}data-bs-toggle="tooltip" data-bs-placement="top" title="Notes: {{ fee_record.notes|truncatewords:10 }}"{% endif %}>
+                                                S{{ fee_record.semester }}: Rs.{{ fee_record.paid_amount|floatformat:0 }}/{{ fee_record.total_fee|floatformat:0 }}
+                                                {% if fee_record.notes %}<i class="fas fa-sticky-note ms-1" style="font-size: 0.8em;"></i>{% endif %}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>Rs.{{ data.total_paid|floatformat:0 }}</strong> / 
+                                    Rs.{{ data.total_expected|floatformat:0 }}
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar {% if data.completion_percentage == 100 %}bg-success{% elif data.completion_percentage > 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             data-width="{{ data.completion_percentage }}">
+                                            {{ data.completion_percentage }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-success payment-btn" 
+                                                data-student-id="{{ data.student.id }}"
+                                                data-student-name="{{ data.student.full_name|escapejs }}"
+                                                data-semester-count="{{ data.fee_records|length }}">
+                                            <i class="fas fa-plus"></i> Add Payment
+                                        </button>
+                                        <button class="btn btn-sm btn-info" 
+                                                onclick="showPaymentHistory('{{ data.student.id }}', '{{ data.student.full_name|escapejs }}')"
+                                                title="View Payment History">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                    <h5>No fee records found</h5>
+                    <p class="text-muted">No students match your current filters.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Payment History Modal -->
+<div class="modal fade" id="paymentHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-history"></i> Payment History
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="payment_history_content">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading payment history...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-money-check-alt"></i> Record Fee Payment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="fee_record_id" name="fee_record_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Student:</label>
+                        <div id="student_info" class="fw-bold"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="semester_select" class="form-label">Semester</label>
+                        <select class="form-select" id="semester_select" onchange="updateFeeRecord()">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amount_paid" class="form-label">Amount Paid (Rs.)</label>
+                        <input type="number" class="form-control" id="amount_paid" name="amount_paid" 
+                               step="0.01" min="0" max="50000" placeholder="Enter amount" required>
+                        <div class="form-text">Maximum: Rs.50,000 per semester</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">Payment Method</label>
+                        <select class="form-select" id="payment_method" name="payment_method">
+                            <option value="cash">Cash</option>
+                            <option value="online">Online Payment</option>
+                            <option value="cheque">Cheque</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Add any notes about this payment..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitPayment()">
+                    <i class="fas fa-save"></i> Record Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStudentData = null;
+
+function showPaymentModal(studentId, studentName, semesterCount) {
+    currentStudentData = {
+        studentId: studentId,
+        studentName: studentName,
+        semesterCount: semesterCount
+    };
+    
+    document.getElementById('student_info').textContent = studentName;
+    
+    // Populate semester dropdown
+    const semesterSelect = document.getElementById('semester_select');
+    semesterSelect.innerHTML = '';
+    
+    for (let i = 1; i <= semesterCount; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = 'Semester ' + i;
+        semesterSelect.appendChild(option);
+    }
+    
+    // Clear form BEFORE showing modal
+    document.getElementById('paymentForm').reset();
+    
+    // Reset specific fields to ensure they're empty
+    document.getElementById('amount_paid').value = '';
+    document.getElementById('notes').value = '';
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('paymentModal')).show();
+}
+
+function updateFeeRecord() {
+    // This would typically fetch the fee record ID for the selected semester
+    // For now, we'll construct it based on student ID and semester
+    const semester = document.getElementById('semester_select').value;
+    if (currentStudentData && semester) {
+        // Note: You'd need to pass the actual fee record IDs from the template
+        // For now, this is a placeholder - you may need to adjust this based on your backend logic
+        document.getElementById('fee_record_id').value = currentStudentData.studentId + '_' + semester;
+    }
+}
+
+function submitPayment() {
+    const form = document.getElementById('paymentForm');
+    const formData = new FormData(form);
+    
+    // Ensure fee_record_id is set
+    updateFeeRecord();
+    
+    // Add the separate student_id and semester fields that Django expects
+    formData.append('student_id', currentStudentData.studentId);
+    formData.append('semester', document.getElementById('semester_select').value);
+    
+    // Add validation
+    const amountPaid = parseFloat(document.getElementById('amount_paid').value);
+    
+    if (!amountPaid || amountPaid <= 0) {
+        alert('Error: Please enter a valid amount greater than 0.');
+        return;
+    }
+    
+    if (amountPaid > 50000) {
+        alert('Error: Payment amount cannot exceed Rs.50,000 per semester.');
+        return;
+    }
+    
+    // Show confirmation for large payments
+    if (amountPaid > 40000) {
+        if (!confirm(`Are you sure you want to record a payment of Rs.${amountPaid.toLocaleString()}?`)) {
+            return;
+        }
+    }
+    
+    fetch('{% url "courses:mark-fee-payment" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload(); // Refresh the page to show updated data
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error recording payment: ' + error);
+    });
+}
+
+function showPaymentHistory(studentId, studentName) {
+    document.getElementById('payment_history_content').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading payment history for ${studentName}...</p>
+        </div>
+    `;
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('paymentHistoryModal')).show();
+    
+    // Fetch payment history
+    fetch(`{% url 'courses:student-payment-history' '0' %}`.replace('0', studentId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let historyHtml = `
+                <div class="mb-3">
+                    <h6><i class="fas fa-user"></i> ${studentName}</h6>
+                    <small class="text-muted">Complete payment history and notes</small>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Date</th>
+                                <th>Semester</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            if (data.payments && data.payments.length > 0) {
+                data.payments.forEach(payment => {
+                    const paymentDate = payment.payment_date ? new Date(payment.payment_date).toLocaleDateString() : 'Not recorded';
+                    const notes = payment.notes || '<em class="text-muted">No notes</em>';
+                    const method = payment.payment_method || 'Not specified';
+                    
+                    historyHtml += `
+                        <tr>
+                            <td>${paymentDate}</td>
+                            <td><span class="badge bg-primary">Semester ${payment.semester}</span></td>
+                            <td><strong>Rs.${payment.paid_amount.toLocaleString()}</strong></td>
+                            <td>${method}</td>
+                            <td>${notes}</td>
+                        </tr>
+                    `;
+                });
+                
+                // Add summary row
+                historyHtml += `
+                    <tr class="table-info">
+                        <td colspan="2"><strong>Total Paid</strong></td>
+                        <td><strong>Rs.${data.total_paid.toLocaleString()}</strong></td>
+                        <td colspan="2"></td>
+                    </tr>
+                `;
+            } else {
+                historyHtml += '<tr><td colspan="5" class="text-center text-muted">No payment history found</td></tr>';
+            }
+            
+            historyHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('payment_history_content').innerHTML = historyHtml;
+        } else {
+            document.getElementById('payment_history_content').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Error loading payment history: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById('payment_history_content').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Error loading payment history: ${error}
+            </div>
+        `;
+    });
+}
+
+// Event listeners and initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Set progress bar widths
+    document.querySelectorAll('.progress-bar[data-width]').forEach(function(bar) {
+        var width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+    
+    // Add event listeners to payment buttons
+    document.querySelectorAll('.payment-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            const studentName = this.getAttribute('data-student-name');
+            const semesterCount = parseInt(this.getAttribute('data-semester-count'));
+            showPaymentModal(studentId, studentName, semesterCount);
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Materials - {{ subject.subject_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+    
+    .upload-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: none;
+        background: white;
+        overflow: hidden;
+    }
+    
+    .upload-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 25px;
+        text-align: center;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .file-upload-area {
+        border: 2px dashed #28a745;
+        border-radius: 10px;
+        padding: 40px 20px;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .file-upload-area:hover {
+        background: #e9f7ef;
+        border-color: #20c997;
+    }
+    
+    .file-upload-area.dragover {
+        background: #d4edda;
+        border-color: #155724;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: #28a745;
+        margin-bottom: 15px;
+    }
+    
+    .btn-upload {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-upload:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        color: white;
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        margin-right: 15px;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+        color: white;
+    }
+    
+    .file-preview {
+        display: none;
+        margin-top: 15px;
+        padding: 15px;
+        background: #e9f7ef;
+        border-radius: 10px;
+        border: 1px solid #28a745;
+    }
+    
+    .file-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .subject-info {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+        border-left: 4px solid #28a745;
+    }
+    
+    .required {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    {% if subject %}
+    <div class="upload-card">
+        <div class="upload-header">
+            <h2><i class="fas fa-cloud-upload-alt me-2"></i>Upload Course Materials</h2>
+            <p class="mb-0">Share study materials with your students</p>
+        </div>
+        
+        <div class="card-body p-4">
+            <!-- Subject Information -->
+            <div class="subject-info">
+                <h5 class="mb-2">{{ subject.subject_name }}</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Subject Code:</strong> {{ subject.subject_code }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Semester:</strong> {{ subject.semester }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Credits:</strong> {{ subject.credits|default:"3" }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upload Form -->
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+                
+                <!-- Material Title -->
+                <div class="form-group">
+                    <label for="title" class="form-label">
+                        Material Title <span class="required">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="title" 
+                           name="title" 
+                           placeholder="Enter material title (e.g., Chapter 1 - Introduction to Programming)"
+                           required>
+                </div>
+                
+                <!-- Material Description -->
+                <div class="form-group">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" 
+                              id="description" 
+                              name="description" 
+                              rows="3"
+                              placeholder="Brief description of the material content (optional)"></textarea>
+                </div>
+                
+                
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label for="material_file" class="form-label">
+                        Select File <span class="required">*</span>
+                    </label>
+                    <div class="file-upload-area" onclick="document.getElementById('material_file').click()">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h5>Click to select file or drag and drop</h5>
+                        <p class="text-muted mb-0">
+                            Supported formats: PDF, PPT, PPTX, DOC, DOCX, MP4, AVI (Max: 50MB)
+                        </p>
+                        <input type="file" 
+                               class="d-none" 
+                               id="material_file" 
+                               name="material_file" 
+                               accept=".pdf,.ppt,.pptx,.doc,.docx,.mp4,.avi,.jpg,.jpeg,.png"
+                               required>
+                    </div>
+                    
+                    <!-- File Preview -->
+                    <div class="file-preview" id="filePreview">
+                        <div class="file-info">
+                            <i class="fas fa-file-alt fs-4 text-success"></i>
+                            <div>
+                                <div class="fw-bold" id="fileName"></div>
+                                <div class="text-muted" id="fileSize"></div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="removeFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="text-end mt-4">
+                    <a href="{% url 'courses:subject-detail' subject.subject_code %}" class="btn btn-cancel">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-upload">
+                        <i class="fas fa-upload me-2"></i>Upload Material
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Error State -->
+    <div class="alert alert-danger text-center">
+        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+        <h4>Subject Not Found</h4>
+        <p>The requested subject could not be found or you don't have access to it.</p>
+        <a href="{% url 'courses:teacher-dashboard' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('material_file');
+    const fileUploadArea = document.querySelector('.file-upload-area');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    
+    // File input change event
+    fileInput.addEventListener('change', function(e) {
+        handleFileSelect(e.target.files[0]);
+    });
+    
+    // Drag and drop events
+    fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+    });
+    
+    fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect(files[0]);
+        }
+    });
+    
+    function handleFileSelect(file) {
+        if (file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            filePreview.style.display = 'block';
+            
+        }
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Form submission
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        const submitBtn = document.querySelector('.btn-upload');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+        submitBtn.disabled = true;
+    });
+});
+
+function removeFile() {
+    document.getElementById('material_file').value = '';
+    document.getElementById('filePreview').style.display = 'none';
+}
+</script>
+{% endblock %}

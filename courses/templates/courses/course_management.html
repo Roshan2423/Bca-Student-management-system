@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Course Management - BCA Student Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    <!-- Header Section with Conditional Admin Buttons -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-book-open me-2 text-primary"></i>Course Management</h2>
+            <p class="text-muted mb-0">
+                {% if is_admin %}
+                    Manage BCA subjects, teacher assignments, and course materials
+                {% else %}
+                    View BCA subjects and course information
+                {% endif %}
+            </p>
+        </div>
+        {% if is_admin %}
+        <div class="d-flex gap-2">
+            <a href="{% url 'courses:teacher-create' %}" class="btn btn-success">
+                <i class="fas fa-user-plus me-2"></i>Add Teacher
+            </a>
+            <a href="{% url 'courses:teacher-list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-chalkboard-teacher me-2"></i>Manage Teachers
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6>Total Subjects</h6>
+                        <h3>{{ total_subjects }}</h3>
+                    </div>
+                    <i class="fas fa-book fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6>Assigned Subjects</h6>
+                        <h3>{{ assigned_subjects }}</h3>
+                        <small>{{ assignment_rate }}% assigned</small>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6>Unassigned</h6>
+                        <h3>{{ unassigned_subjects }}</h3>
+                        <small>Need teachers</small>
+                    </div>
+                    <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6>Active Teachers</h6>
+                        <h3>{{ total_teachers }}</h3>
+                        <small>Available for assignment</small>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6><i class="fas fa-filter me-2"></i>Filter & Search</h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Search Subjects</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Subject name or code...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Semester</label>
+                    <select class="form-select" name="semester">
+                        <option value="">All Semesters</option>
+                        {% for i in "12345678" %}
+                        <option value="{{ i }}" {% if semester_filter == i %}selected{% endif %}>Semester {{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Teacher Assignment</label>
+                    <select class="form-select" name="teacher">
+                        <option value="">All Subjects</option>
+                        <option value="assigned" {% if teacher_filter == 'assigned' %}selected{% endif %}>Assigned Only</option>
+                        <option value="unassigned" {% if teacher_filter == 'unassigned' %}selected{% endif %}>Unassigned Only</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
+                    {% if has_search %}
+                    <a href="{% url 'courses:course-management' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Subject Table -->
+    {% if subjects_by_semester %}
+        {% for semester, subjects in subjects_by_semester.items %}
+        <div class="card mb-4">
+            <div class="card-header bg-light d-flex justify-content-between">
+                <h5><i class="fas fa-layer-group me-2 text-primary"></i>Semester {{ semester }}</h5>
+                <small class="text-muted">{{ subjects|length }} subjects</small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Teacher</th>
+                                <th>Assignments</th>
+                                <th>Materials</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subject_data in subjects %}
+                            {% with subject=subject_data.subject %}
+                            <tr>
+                                <td><span class="badge bg-primary fs-6">{{ subject.subject_code }}</span></td>
+                                <td>
+                                    <div class="fw-semibold">{{ subject.subject_name }}</div>
+                                    {% if subject.description %}
+                                    <small class="text-muted">{{ subject.description|truncatewords:8 }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if subject_data.has_teacher %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            {{ subject.assigned_teacher.first_name|first }}{{ subject.assigned_teacher.last_name|first }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">{{ subject_data.teacher_name }}</div>
+                                            <small class="text-muted">{{ subject.assigned_teacher.designation }}</small>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i> Not Assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if subject_data.assignment_count > 0 %}
+                                    <span class="badge bg-info">{{ subject_data.assignment_count }} assignments</span>
+                                    {% else %}
+                                    <span class="text-muted">No assignments</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if subject_data.material_count > 0 %}
+                                    <span class="badge bg-success">{{ subject_data.material_count }} materials</span>
+                                    {% else %}
+                                    <span class="text-muted">No materials</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if subject_data.has_teacher %}
+                                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Assigned</span>
+                                    {% else %}
+                                    <span class="badge bg-warning"><i class="fas fa-clock me-1"></i>Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'courses:subject-detail' subject.subject_code %}" class="btn btn-outline-primary" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if is_admin %}
+                                            {% if subject_data.has_teacher %}
+                                            <a href="{% url 'courses:teacher-detail' subject.assigned_teacher.teacher_id %}" class="btn btn-outline-info" title="Teacher Detail">
+                                                <i class="fas fa-user"></i>
+                                            </a>
+                                            {% else %}
+                                            <button class="btn btn-outline-success" title="Assign"
+                                                    onclick="assignTeacher('{{ subject.subject_code }}', '{{ subject.subject_name }}')">
+                                                <i class="fas fa-user-plus"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button class="btn btn-outline-warning" title="Reassign"
+                                                    onclick="reassignTeacher('{{ subject.subject_code }}', '{{ subject.subject_name }}', '{{ subject_data.teacher_name }}')">
+                                                <i class="fas fa-user-edit"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No subjects found</h5>
+            <p class="text-muted">Try adjusting your search criteria</p>
+            <a href="{% url 'courses:course-management' %}" class="btn btn-primary">
+                <i class="fas fa-list me-2"></i>View All Subjects
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Assignment Modal - Admin Only -->
+    {% if is_admin %}
+    <div class="modal fade" id="assignTeacherModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'courses:assign-teacher' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title">Assign Teacher</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="subject_code" id="assignSubjectCode">
+                        <p><strong>Subject:</strong> <span id="assignSubjectName"></span></p>
+                        <div class="mb-3">
+                            <label>Select Teacher</label>
+                            <select class="form-select" name="teacher_id" required>
+                                <option value="">Choose...</option>
+                                {% for teacher in all_teachers %}
+                                <option value="{{ teacher.teacher_id }}">{{ teacher.full_name }} - {{ teacher.designation }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Assign</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Styles -->
+<style>
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.badge.fs-6 {
+    font-size: 0.875rem !important;
+}
+.card-header {
+    border-bottom: 2px solid #e9ecef;
+}
+</style>
+
+<!-- Scripts -->
+<script>
+function assignTeacher(code, name) {
+    document.getElementById('assignSubjectCode').value = code;
+    document.getElementById('assignSubjectName').textContent = code + ' - ' + name;
+    new bootstrap.Modal(document.getElementById('assignTeacherModal')).show();
+}
+
+function reassignTeacher(code, name, teacher) {
+    document.getElementById('assignSubjectCode').value = code;
+    document.getElementById('assignSubjectName').textContent = code + ' - ' + name + ' (Current: ' + teacher + ')';
+    new bootstrap.Modal(document.getElementById('assignTeacherModal')).show();
+}
+</script>
+
+{% endblock %}

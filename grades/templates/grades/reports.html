@@ -1,0 +1,431 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Grade Reports{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/grade-reports-print.css' %}">
+<style>
+/* Force side-by-side layout for statistics cards */
+.screen-only .row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+}
+
+.screen-only .col-6 {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+    padding-left: 7.5px !important;
+    padding-right: 7.5px !important;
+}
+
+.screen-only .card {
+    margin-bottom: 0 !important;
+    height: 100% !important;
+}
+
+@media (max-width: 576px) {
+    .screen-only .col-6 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    .screen-only .card-body h3 {
+        font-size: 1.5rem !important;
+    }
+    .screen-only .card-body p {
+        font-size: 0.875rem !important;
+    }
+}
+
+@media print {
+    .horizontal-stats {
+        display: table !important;
+        width: 100% !important;
+        border: 2px solid #000 !important;
+        margin-bottom: 20px !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+    }
+    .horizontal-stats .stat-cell {
+        display: table-cell !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        padding: 15px 10px !important;
+        border-right: 1px solid #000 !important;
+    }
+    .horizontal-stats .stat-cell:last-child {
+        border-right: none !important;
+    }
+    .stat-number {
+        font-size: 18pt !important;
+        font-weight: bold !important;
+        color: #000 !important;
+        margin: 0 0 5px 0 !important;
+        display: block !important;
+    }
+    .stat-text {
+        font-size: 9pt !important;
+        color: #333 !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Print Header (only visible when printing) -->
+    <div class="print-only print-header">
+        <h1>Whitefield International College</h1>
+        <h2>Grade Report</h2>
+        <div class="report-info">
+            <p><strong>Semester:</strong> {{ selected_semester }}{% if selected_exam_type %} | <strong>Exam:</strong> {{ selected_exam_type.exam_name }}{% endif %}{% if selected_subject %} | <strong>Subject:</strong> {{ selected_subject.subject_code }} - {{ selected_subject.subject_name }}{% endif %}</p>
+            <p><strong>Generated:</strong> {% now "F d, Y \a\t g:i A" %} | <strong>Total Students:</strong> {{ semester_stats.total_students }}</p>
+        </div>
+    </div>
+    
+    <!-- Screen Header -->
+    <div class="screen-only">
+        <h2>Grade Reports & Analytics</h2>
+    </div>
+    
+    <!-- Filter Form (Screen Only) -->
+    <div class="card mb-4 screen-only">
+        <div class="card-header">
+            <h5>Report Filters</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Semester</label>
+                    <select name="semester" class="form-select">
+                        {% for value, label in semester_choices %}
+                        <option value="{{ value }}" {% if value == selected_semester %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Exam Type</label>
+                    <select name="exam_type" class="form-select">
+                        <option value="">Select Exam Type</option>
+                        {% for exam_type in exam_types %}
+                        <option value="{{ exam_type.id }}" {% if selected_exam_type and selected_exam_type.id == exam_type.id %}selected{% endif %}>
+                            {{ exam_type.exam_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- NEW: Subject Filter -->
+                <div class="col-md-3">
+                    <label class="form-label">Subject (Optional)</label>
+                    <select name="subject" class="form-select">
+                        <option value="">All Subjects</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}" {% if selected_subject and selected_subject.id == subject.id %}selected{% endif %}>
+                            {{ subject.subject_code }} - {{ subject.subject_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Screen Statistics -->
+    <div class="row mb-4 screen-only" style="display: flex !important; flex-wrap: nowrap !important; gap: 15px;">
+        <div class="col-6" style="flex: 0 0 calc(50% - 7.5px) !important; max-width: calc(50% - 7.5px) !important;">
+            <div class="card bg-info text-white text-center" style="height: 100% !important;">
+                <div class="card-body">
+                    <h3>{{ semester_stats.total_students }}</h3>
+                    <p class="mb-0">Students in Semester {{ selected_semester }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6" style="flex: 0 0 calc(50% - 7.5px) !important; max-width: calc(50% - 7.5px) !important;">
+            <div class="card bg-secondary text-white text-center" style="height: 100% !important;">
+                <div class="card-body">
+                    <h3>{{ semester_stats.subjects_count }}</h3>
+                    <p class="mb-0">Subjects in Semester {{ selected_semester }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Basic Statistics (Semester Info) -->
+    <div class="print-only horizontal-stats avoid-break">
+        <div class="stat-cell">
+            <div class="stat-number">{{ semester_stats.total_students }}</div>
+            <div class="stat-text">Students in Semester {{ selected_semester }}</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-number">{{ semester_stats.subjects_count }}</div>
+            <div class="stat-text">Subjects in Semester {{ selected_semester }}</div>
+        </div>
+        {% if selected_exam_type %}
+        <div class="stat-cell">
+            <div class="stat-number">{{ selected_exam_type.exam_name }}</div>
+            <div class="stat-text">Selected Exam Type</div>
+        </div>
+        {% else %}
+        <div class="stat-cell">
+            <div class="stat-number">-</div>
+            <div class="stat-text">No Exam Selected</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if selected_exam_type %}
+    <!-- Screen Exam Statistics -->
+    <div class="row mb-4 screen-only" style="display: flex !important; flex-wrap: nowrap !important; gap: 10px;">
+        <div class="col-3" style="flex: 0 0 calc(25% - 7.5px) !important; max-width: calc(25% - 7.5px) !important;">
+            <div class="card bg-primary text-white text-center" style="height: 100% !important;">
+                <div class="card-body">
+                    <h3>{{ exam_stats.students_graded }}</h3>
+                    <p class="mb-0">Students Graded</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-3" style="flex: 0 0 calc(25% - 7.5px) !important; max-width: calc(25% - 7.5px) !important;">
+            <div class="card bg-success text-white text-center" style="height: 100% !important;">
+                <div class="card-body">
+                    <h3>{{ exam_stats.students_passed }}</h3>
+                    <p class="mb-0">Students Passed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-3" style="flex: 0 0 calc(25% - 7.5px) !important; max-width: calc(25% - 7.5px) !important;">
+            <div class="card bg-danger text-white text-center" style="height: 100% !important;">
+                <div class="card-body">
+                    <h3>{{ exam_stats.students_failed }}</h3>
+                    <p class="mb-0">Students Failed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-3" style="flex: 0 0 calc(25% - 7.5px) !important; max-width: calc(25% - 7.5px) !important;">
+            <div class="card bg-warning text-white text-center" style="height: 100% !important;">
+                <div class="card-body">
+                    <h3>{{ exam_stats.average_percentage }}%</h3>
+                    <p class="mb-0">Average Percentage</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Exam Statistics -->
+    <div class="print-only horizontal-stats avoid-break">
+        <div class="stat-cell">
+            <div class="stat-number">{{ exam_stats.students_graded }}</div>
+            <div class="stat-text">Students Graded</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-number">{{ exam_stats.students_passed }}</div>
+            <div class="stat-text">Passed</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-number">{{ exam_stats.students_failed }}</div>
+            <div class="stat-text">Failed</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-number">{{ exam_stats.average_percentage }}%</div>
+            <div class="stat-text">Average Score</div>
+        </div>
+    </div>
+
+    <!-- Report Title -->
+    {% if selected_subject %}
+    <div class="alert alert-info">
+        <h5 class="mb-0">
+            <i class="fas fa-book"></i> 
+            Showing results for: {{ selected_subject.subject_code }} - {{ selected_subject.subject_name }}
+            {% if selected_exam_type %} ({{ selected_exam_type.exam_name }}){% endif %}
+        </h5>
+    </div>
+    {% endif %}
+
+    <!-- Student Results Table -->
+    {% if grade_details %}
+    <div class="card">
+        <div class="card-header">
+            <h5>
+                {% if selected_subject %}
+                    {{ selected_subject.subject_name }} - {{ selected_exam_type.exam_name }} Results
+                {% else %}
+                    Student Performance - {{ selected_exam_type.exam_name }}
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped print-table avoid-break">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Student ID</th>
+                            {% if not selected_subject %}
+                            <th>Subject</th>
+                            {% endif %}
+                            <th>Marks</th>
+                            <th>Total</th>
+                            <th>%</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            {% if selected_subject %}
+                            <th>Remarks</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grade in grade_details %}
+                        <tr>
+                            <td>{{ grade.student.full_name }}</td>
+                            <td>{{ grade.student.student_id }}</td>
+                            {% if not selected_subject %}
+                            <td>
+                                <small class="text-muted">{{ grade.subject.subject_code }}</small><br>
+                                {{ grade.subject.subject_name }}
+                            </td>
+                            {% endif %}
+                            <td><strong>{{ grade.marks_obtained }}</strong></td>
+                            <td>{{ grade.total_marks }}</td>
+                            <td>
+                                <span class="badge {% if grade.percentage >= 60 %}bg-success{% elif grade.percentage >= 40 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ grade.percentage }}%
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if grade.is_pass %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if grade.is_pass %}Pass{% else %}Fail{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ grade.assigned_date|date:"M d, Y" }}</td>
+                            {% if selected_subject %}
+                            <td>
+                                {% if grade.remarks %}
+                                    <small class="text-muted">{{ grade.remarks|truncatechars:50 }}</small>
+                                {% else %}
+                                    <small class="text-muted">No remarks</small>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject-wise Summary (when no specific subject selected) -->
+    {% elif not selected_subject and selected_exam_type and subject_summaries %}
+    <div class="card">
+        <div class="card-header">
+            <h5>Subject-wise Performance Summary - {{ selected_exam_type.exam_name }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped summary-table avoid-break">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Total</th>
+                            <th>Graded</th>
+                            <th>Passed</th>
+                            <th>Failed</th>
+                            <th>Pass Rate</th>
+                            <th>Average</th>
+                            <th class="screen-only">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for summary in subject_summaries %}
+                        <tr>
+                            <td>
+                                <strong>{{ summary.subject.subject_code }}</strong><br>
+                                <small class="text-muted">{{ summary.subject.subject_name }}</small>
+                            </td>
+                            <td><span class="badge bg-info">{{ summary.total_students }}</span></td>
+                            <td><span class="badge bg-primary">{{ summary.graded_students }}</span></td>
+                            <td><span class="badge bg-success">{{ summary.passed_students }}</span></td>
+                            <td><span class="badge bg-danger">{{ summary.failed_students }}</span></td>
+                            <td>
+                                <span class="badge {% if summary.pass_rate >= 80 %}bg-success{% elif summary.pass_rate >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ summary.pass_rate }}%
+                                </span>
+                            </td>
+                            <td>{{ summary.average_marks|floatformat:1 }}/{{ summary.total_marks }}</td>
+                            <td class="screen-only">
+                                <a href="?semester={{ selected_semester }}&exam_type={{ selected_exam_type.id }}&subject={{ summary.subject.id }}" 
+                                   class="btn btn-sm btn-outline-primary">View Details</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info text-center">
+        <h5>Select Exam Type</h5>
+        <p class="mb-0">Please select an exam type to view detailed grade reports.</p>
+    </div>
+    {% endif %}
+
+    {% if not grade_details and not subject_summaries and selected_exam_type %}
+    <div class="text-center py-5">
+        <h5 class="text-muted">No Grade Data Available</h5>
+        <p class="text-muted">
+            No grades have been assigned for 
+            {% if selected_subject %}{{ selected_subject.subject_name }} - {% endif %}{{ selected_exam_type.exam_name }}.
+        </p>
+        <a href="{% url 'grades:assign-grades' %}" class="btn btn-primary">Assign Grades</a>
+    </div>
+    {% endif %}
+
+    <!-- Navigation (Screen Only) -->
+    <div class="text-center mt-4 screen-only">
+        <a href="{% url 'grades:dashboard' %}" class="btn btn-outline-secondary me-3">Back to Grade Dashboard</a>
+        <a href="{% url 'grades:assign-grades' %}" class="btn btn-outline-primary me-3">Assign Grades</a>
+        {% if grade_details or subject_summaries %}
+        <button type="button" class="btn print-button" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Report
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Print Footer (only visible when printing) -->
+    <div class="print-only print-footer">
+        <p>Whitefield International College - Grade Report | Generated on {% now "F d, Y \a\t g:i A" %} | Page 1 of 1</p>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Enhanced print function with better formatting
+function printReport() {
+    // Add print-specific body class
+    document.body.classList.add('printing');
+    
+    // Trigger print
+    window.print();
+    
+    // Remove print class after printing
+    setTimeout(function() {
+        document.body.classList.remove('printing');
+    }, 1000);
+}
+
+// Replace onclick handler
+document.querySelector('.print-button').onclick = printReport;
+</script>
+{% endblock %}
+{% endblock %}

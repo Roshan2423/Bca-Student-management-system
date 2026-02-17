@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Random Forest Algorithm - Student Performance Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rf-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .rf-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .rf-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        padding: 25px;
+        margin-bottom: 25px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .btn-analyze {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        padding: 15px 40px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .btn-analyze:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin: 25px 0;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        border-left: 4px solid;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    
+    .stat-card.high-risk { border-left-color: #e74c3c; }
+    .stat-card.medium-risk { border-left-color: #f39c12; }
+    .stat-card.low-risk { border-left-color: #27ae60; }
+    .stat-card.total { border-left-color: #3498db; }
+    
+    .stat-number {
+        font-size: 2.5em;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .student-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .student-table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+    }
+    
+    .student-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .student-table tr:hover {
+        background-color: #f8f9ff;
+    }
+    
+    .risk-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .risk-high { background: #e74c3c; color: white; }
+    .risk-medium { background: #f39c12; color: white; }
+    .risk-low { background: #27ae60; color: white; }
+    
+    .performance-badge {
+        padding: 4px 8px;
+        border-radius: 15px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+    
+    .perf-high { background: #d4edda; color: #155724; }
+    .perf-medium { background: #fff3cd; color: #856404; }
+    .perf-low { background: #f8d7da; color: #721c24; }
+    
+    .algorithm-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #6c757d;
+        margin-bottom: 25px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .feature-importance {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+    
+    .feature-bar {
+        background: #e9ecef;
+        height: 20px;
+        border-radius: 10px;
+        margin: 5px 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-fill {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rf-container">
+    <!-- Header Section -->
+    <div class="rf-header">
+        <h1>Random Forest Algorithm</h1>
+        <h2>Student Performance Analysis</h2>
+    </div>
+
+
+    <!-- Analysis Control -->
+    <div class="rf-card text-center">
+        <h3>Start Performance Analysis</h3>
+        <p>Click below to run Random Forest analysis on all students</p>
+        
+        <form method="POST" id="analysisForm">
+            {% csrf_token %}
+            <button type="submit" class="btn-analyze" id="analyzeBtn">
+                <span id="btnText">🚀 Analyze Students with Random Forest</span>
+                <span id="btnLoading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    Analyzing... Please wait
+                </span>
+            </button>
+        </form>
+        
+    </div>
+
+    {% if show_results and analysis_result.success %}
+    <!-- Analysis Results -->
+    <div class="rf-card">
+        <h3>📊 Analysis Results</h3>
+        
+        <!-- Statistics Grid -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-number">{{ analysis_result.summary.total_students }}</div>
+                <div>Total Students</div>
+            </div>
+            <div class="stat-card high-risk">
+                <div class="stat-number">{{ analysis_result.summary.high_risk_count }}</div>
+                <div>High Risk</div>
+            </div>
+            <div class="stat-card medium-risk">
+                <div class="stat-number">{{ analysis_result.summary.medium_risk_count }}</div>
+                <div>Medium Risk</div>
+            </div>
+            <div class="stat-card low-risk">
+                <div class="stat-number">{{ analysis_result.summary.low_risk_count }}</div>
+                <div>Low Risk</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Analysis Table -->
+    <div class="rf-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>👥 Individual Student Predictions</h3>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label for="semesterFilter" style="font-weight: bold;">Filter by Semester:</label>
+                <select id="semesterFilter" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                    <option value="all">All Semesters</option>
+                    <option value="1">1st Semester</option>
+                    <option value="2">2nd Semester</option>
+                    <option value="3">3rd Semester</option>
+                    <option value="4">4th Semester</option>
+                    <option value="5">5th Semester</option>
+                    <option value="6">6th Semester</option>
+                    <option value="7">7th Semester</option>
+                    <option value="8">8th Semester</option>
+                </select>
+            </div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="student-table" id="studentTable">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Program</th>
+                        <th>Attendance %</th>
+                        <th>Avg Grades</th>
+                        <th>Pass Probability</th>
+                        <th>Predicted Performance</th>
+                        <th>Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in analysis_result.students_data %}
+                    <tr class="student-row" data-semester="{{ student.semester }}">
+                        <td>
+                            <strong>{{ student.student_name }}</strong><br>
+                            <small>{{ student.program }} - Sem {{ student.semester }}</small>
+                        </td>
+                        <td>{{ student.program }}</td>
+                        <td>
+                            {% if student.attendance_percentage >= 75 %}
+                                <span style="color: #27ae60; font-weight: bold;">{{ student.attendance_percentage }}%</span>
+                            {% elif student.attendance_percentage >= 60 %}
+                                <span style="color: #f39c12; font-weight: bold;">{{ student.attendance_percentage }}%</span>
+                            {% else %}
+                                <span style="color: #e74c3c; font-weight: bold;">{{ student.attendance_percentage }}%</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ student.avg_grade_score|floatformat:1 }}%</td>
+                        <td>
+                            {% if student.pass_probability %}
+                                <strong>{{ student.pass_probability }}%</strong>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if student.predicted_performance == 'High' %}
+                                <span class="performance-badge perf-high">{{ student.predicted_performance }}</span>
+                            {% elif student.predicted_performance == 'Medium' %}
+                                <span class="performance-badge perf-medium">{{ student.predicted_performance }}</span>
+                            {% else %}
+                                <span class="performance-badge perf-low">{{ student.predicted_performance }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if student.risk_level == 'High Risk' %}
+                                <span class="risk-badge risk-high">{{ student.risk_level }}</span>
+                            {% elif student.risk_level == 'Medium Risk' %}
+                                <span class="risk-badge risk-medium">{{ student.risk_level }}</span>
+                            {% else %}
+                                <span class="risk-badge risk-low">{{ student.risk_level }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    {% elif show_results and not analysis_result.success %}
+    <!-- Error Display -->
+    <div class="rf-card" style="border-left-color: #e74c3c;">
+        <h3>Analysis Error</h3>
+        <p>{{ analysis_result.message }}</p>
+        {% if analysis_result.data %}
+        <p><strong>Available Data:</strong> {{ analysis_result.data|length }} students found</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+document.getElementById('analyzeBtn').addEventListener('click', function(e) {
+    e.preventDefault(); // Prevent immediate form submission
+    
+    // Show simple loading state
+    document.getElementById('btnText').style.display = 'none';
+    document.getElementById('btnLoading').style.display = 'inline-block';
+    this.disabled = true;
+    
+    // Submit form after a brief moment (just enough to show the spinner)
+    setTimeout(() => {
+        document.getElementById('analysisForm').submit();
+    }, 300);
+});
+
+// Auto-remove success messages after 2 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove success messages after 2 seconds
+    const successMessages = document.querySelectorAll('.alert-success, .messages .success');
+    successMessages.forEach(function(message) {
+        setTimeout(function() {
+            message.style.transition = 'opacity 0.5s ease-out';
+            message.style.opacity = '0';
+            setTimeout(function() {
+                message.remove();
+            }, 500);
+        }, 2000);
+    });
+    
+    // Semester filtering functionality
+    const semesterFilter = document.getElementById('semesterFilter');
+    
+    if (semesterFilter) {
+        semesterFilter.addEventListener('change', function() {
+            const selectedSemester = this.value;
+            const studentRows = document.querySelectorAll('.student-row');
+            
+            studentRows.forEach(function(row) {
+                const studentSemester = row.getAttribute('data-semester');
+                
+                if (selectedSemester === 'all' || studentSemester === selectedSemester) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update table header with count
+            const visibleRows = document.querySelectorAll('.student-row[style=""], .student-row:not([style])');
+            const totalVisible = Array.from(visibleRows).filter(row => 
+                selectedSemester === 'all' || row.getAttribute('data-semester') === selectedSemester
+            ).length;
+            
+            // Update the heading to show filtered count
+            const heading = document.querySelector('h3');
+            if (heading && heading.textContent.includes('Individual Student Predictions')) {
+                const semesterText = selectedSemester === 'all' ? 'All Students' : `Semester ${selectedSemester} Students`;
+                heading.innerHTML = `👥 Individual Student Predictions - ${semesterText} (${totalVisible})`;
+            }
+        });
+    }
+});
+
+// Add CSS for progress steps
+const style = document.createElement('style');
+style.textContent = `
+    .progress-step {
+        margin: 8px 0;
+        padding: 5px 0;
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+    
+    .progress-step.completed {
+        color: #27ae60;
+        font-weight: bold;
+    }
+    
+    .student-row {
+        transition: opacity 0.3s ease;
+    }
+    
+    .student-row[style*="none"] {
+        opacity: 0;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

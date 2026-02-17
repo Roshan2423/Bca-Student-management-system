@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - {{ user.full_name|default:user.email }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1><i class="fas fa-edit"></i> Edit Profile</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'accounts:profile' %}">Profile</a></li>
+                            <li class="breadcrumb-item active">Edit</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Profile
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Profile Preview -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-id-card"></i> Profile Preview
+                            </h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="avatar-lg bg-primary rounded-circle text-white d-flex align-items-center justify-content-center mx-auto mb-3">
+                                <span style="font-size: 2rem; font-weight: bold;" id="avatar-preview">
+                                    {{ user.first_name|first|default:"U" }}{{ user.last_name|first|default:"" }}
+                                </span>
+                            </div>
+                            <h4 id="name-preview">{{ user.full_name|default:user.email }}</h4>
+                            <p class="text-muted mb-2">{{ user.email }}</p>
+                            <span class="badge bg-{% if user.role == 'admin' %}danger{% elif user.role == 'teacher' %}success{% else %}primary{% endif %} fs-6">
+                                {{ user.role|title }}
+                            </span>
+                            
+                            <div class="mt-3">
+                                <span class="badge bg-{% if user.is_active %}success{% else %}danger{% endif %}">
+                                    {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Form -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user-edit"></i> Edit Profile Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" id="profile-form">
+                                {% csrf_token %}
+                                
+                                <!-- Basic Information -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="first_name" class="form-label">
+                                            <i class="fas fa-user"></i> First Name <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="first_name" 
+                                               name="first_name" 
+                                               value="{{ user.first_name }}" 
+                                               required
+                                               placeholder="Enter first name">
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="last_name" class="form-label">
+                                            <i class="fas fa-user"></i> Last Name <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="last_name" 
+                                               name="last_name" 
+                                               value="{{ user.last_name }}" 
+                                               required
+                                               placeholder="Enter last name">
+                                    </div>
+                                </div>
+
+                                <!-- Email (Read-only) -->
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label for="email" class="form-label">
+                                            <i class="fas fa-envelope"></i> Email Address
+                                        </label>
+                                        <input type="email" 
+                                               class="form-control" 
+                                               id="email" 
+                                               value="{{ user.email }}" 
+                                               readonly
+                                               style="background-color: #f8f9fa;">
+                                        <div class="form-text">Email cannot be changed. Contact administrator if needed.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Role (Read-only) -->
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label for="role_display" class="form-label">
+                                            <i class="fas fa-user-tag"></i> Role
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="role_display" 
+                                               value="{{ user.role|title }}" 
+                                               readonly
+                                               style="background-color: #f8f9fa;">
+                                        <div class="form-text">Role cannot be changed by users.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Password Change Section -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="fas fa-lock"></i> Password Management
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-3">
+                                Change your password to keep your account secure.
+                            </p>
+                            
+                            <form method="post" action="{% url 'accounts:change-own-password' %}" id="password-form">
+                                {% csrf_token %}
+                                
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label for="current_password" class="form-label">
+                                            Current Password <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="password" 
+                                               class="form-control" 
+                                               id="current_password" 
+                                               name="current_password" 
+                                               required
+                                               placeholder="Enter current password">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="new_password" class="form-label">
+                                            New Password <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="password" 
+                                               class="form-control" 
+                                               id="new_password" 
+                                               name="new_password" 
+                                               required
+                                               minlength="8"
+                                               placeholder="Enter new password">
+                                        <div class="form-text">Password must be at least 8 characters long.</div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="confirm_password" class="form-label">
+                                            Confirm New Password <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="password" 
+                                               class="form-control" 
+                                               id="confirm_password" 
+                                               name="confirm_password" 
+                                               required
+                                               minlength="8"
+                                               placeholder="Confirm new password">
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-key"></i> Change Password
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header.bg-primary {
+    background-color: #0d6efd !important;
+}
+
+.card-header.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+</style>
+
+<script>
+// Live preview of name changes
+document.addEventListener('DOMContentLoaded', function() {
+    const firstNameInput = document.getElementById('first_name');
+    const lastNameInput = document.getElementById('last_name');
+    const namePreview = document.getElementById('name-preview');
+    const avatarPreview = document.getElementById('avatar-preview');
+    
+    function updatePreview() {
+        const firstName = firstNameInput.value.trim();
+        const lastName = lastNameInput.value.trim();
+        const fullName = `${firstName} ${lastName}`.trim();
+        
+        if (fullName) {
+            namePreview.textContent = fullName;
+            avatarPreview.textContent = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        } else {
+            namePreview.textContent = '{{ user.email }}';
+            avatarPreview.textContent = 'U';
+        }
+    }
+    
+    firstNameInput.addEventListener('input', updatePreview);
+    lastNameInput.addEventListener('input', updatePreview);
+    
+    // Password confirmation validation
+    const passwordForm = document.getElementById('password-form');
+    passwordForm.addEventListener('submit', function(e) {
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        
+        if (newPassword !== confirmPassword) {
+            e.preventDefault();
+            alert('New passwords do not match!');
+            document.getElementById('confirm_password').focus();
+        }
+    });
+});
+</script>
+{% endblock %}

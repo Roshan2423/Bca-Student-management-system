@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ---------- layout wrapper ---------- */
+    .dashboard-wrapper {
+        background: #f3f6ff;
+        min-height: 100vh;
+        padding-top: 2.5rem;
+    }
+
+    /* ---------- card base ---------- */
+    .glass-card {
+        position: relative;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(10px);
+        border-radius: 1.25rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .glass-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ---------- icon ---------- */
+    .icon-xl {
+        font-size: 2.5rem;
+    }
+
+    /* ---------- numbers ---------- */
+    .stat-number {
+        font-size: 2.25rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    /* ---------- quick‑action buttons ---------- */
+    .action-card i {
+        color: #4669ff;
+    }
+    .action-card:hover i {
+        color: #2d4dff;
+    }
+
+    /* subtle divider */
+    .section-heading {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin: 2.5rem 0 1rem;
+        color: #6b7a99;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container dashboard-wrapper">
+    <!-- Page header -->
+    <div class="glass-card p-5 mb-5 text-center">
+        <i class="fas fa-calendar-check icon-xl text-primary mb-3"></i>
+        <h2 class="fw-bold mb-1">Daily Attendance</h2>
+        <p class="text-muted mb-1">{{ today_date|date:"F d, Y - l" }}</p>
+        <small class="text-muted">Keep track of attendance at a glance</small>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-md-4">
+            <a href="{% url 'attendance:mark-students' %}" class="text-decoration-none text-dark">
+                <div class="glass-card p-4 text-center h-100 action-card">
+                    <i class="fas fa-user-graduate icon-xl mb-3"></i>
+                    <h5 class="fw-semibold mb-0">Mark Students</h5>
+                    <small class="text-muted">Daily check‑in</small>
+                </div>
+            </a>
+        </div>
+        {% if request.user.role == 'admin' %}
+        <div class="col-12 col-md-4">
+            <a href="{% url 'attendance:mark-teachers' %}" class="text-decoration-none text-dark">
+                <div class="glass-card p-4 text-center h-100 action-card">
+                    <i class="fas fa-chalkboard-teacher icon-xl mb-3"></i>
+                    <h5 class="fw-semibold mb-0">Manage Teachers</h5>
+                    <small class="text-muted">Approve attendance</small>
+                </div>
+            </a>
+        </div>
+        {% elif request.user.role == 'teacher' %}
+        <div class="col-12 col-md-4">
+            <a href="{% url 'attendance:teacher-self-mark' %}" class="text-decoration-none text-dark">
+                <div class="glass-card p-4 text-center h-100 action-card">
+                    <i class="fas fa-clock icon-xl mb-3"></i>
+                    <h5 class="fw-semibold mb-0">My Attendance</h5>
+                    <small class="text-muted">Mark your attendance</small>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+        <div class="col-12 col-md-4">
+            <a href="{% url 'attendance:reports' %}" class="text-decoration-none text-dark">
+                <div class="glass-card p-4 text-center h-100 action-card">
+                    <i class="fas fa-chart-line icon-xl mb-3"></i>
+                    <h5 class="fw-semibold mb-0">View Reports</h5>
+                    <small class="text-muted">Analytics</small>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Students section -->
+    <div class="section-heading">Students</div>
+    <div class="row g-4">
+        <div class="col-6 col-lg-4">
+            <div class="glass-card p-4 text-center h-100">
+                <i class="fas fa-check-circle text-success icon-xl mb-2"></i>
+                <div class="stat-number text-success">{{ students_present_today|default:"0" }}</div>
+                <small class="text-muted">Present</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="glass-card p-4 text-center h-100">
+                <i class="fas fa-times-circle text-danger icon-xl mb-2"></i>
+                <div class="stat-number text-danger">{{ students_absent_today|default:"0" }}</div>
+                <small class="text-muted">Absent</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="glass-card p-4 text-center h-100">
+                <i class="fas fa-clock text-warning icon-xl mb-2"></i>
+                <div class="stat-number text-warning">{{ students_not_marked|default:"0" }}</div>
+                <small class="text-muted">Not Marked</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teachers section -->
+    {% if request.user.role == 'admin' %}
+    <div class="section-heading">Teachers</div>
+    <div class="row g-4">
+        <div class="col-6 col-lg-4">
+            <div class="glass-card p-4 text-center h-100">
+                <i class="fas fa-user-tie text-primary icon-xl mb-2"></i>
+                <div class="stat-number text-primary">{{ teachers_present_today|default:"0" }}</div>
+                <small class="text-muted">Present</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="glass-card p-4 text-center h-100">
+                <i class="fas fa-user-times text-secondary icon-xl mb-2"></i>
+                <div class="stat-number text-secondary">{{ teachers_absent_today|default:"0" }}</div>
+                <small class="text-muted">Absent</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="glass-card p-4 text-center h-100">
+                <i class="fas fa-stopwatch text-warning icon-xl mb-2"></i>
+                <div class="stat-number text-warning">{{ teachers_not_marked|default:"0" }}</div>
+                <small class="text-muted">Not Marked</small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

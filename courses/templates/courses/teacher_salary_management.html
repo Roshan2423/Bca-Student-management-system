@@ -1,0 +1,524 @@
+<!-- Create: courses/templates/courses/teacher_salary_management.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teacher Salary Management - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-wallet text-info"></i> Teacher Salary Management
+                    </h1>
+                    <p class="text-muted">Track and manage teacher monthly salary payments for {{ selected_month_name }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card shadow h-100 py-2" style="border-left: 0.25rem solid #4e73df;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Teachers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #5a5c69;">
+                                {{ total_teachers }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chalkboard-teacher fa-2x" style="color: #dddfeb;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card shadow h-100 py-2" style="border-left: 0.25rem solid #1cc88a;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Paid Salaries
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #5a5c69;">
+                                Rs.{{ total_paid_salary|floatformat:0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x" style="color: #dddfeb;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card shadow h-100 py-2" style="border-left: 0.25rem solid #f6c23e;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Total Expense
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #5a5c69;">
+                                Rs.{{ total_salary_expense|floatformat:0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x" style="color: #dddfeb;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card shadow h-100 py-2" style="border-left: 0.25rem solid #36b9cc;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Payment Rate
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #5a5c69;">
+                                {{ payment_percentage }}%
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x" style="color: #dddfeb;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month/Year Filter -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-calendar-alt"></i> Select Month/Year
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="month" class="form-label">Month</label>
+                    <select class="form-select" name="month" id="month">
+                        {% for month_num, month_name in months %}
+                            <option value="{{ month_num }}" {% if month_num == selected_month %}selected{% endif %}>
+                                {{ month_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="year" class="form-label">Year</label>
+                    <select class="form-select" name="year" id="year">
+                        {% for year in years %}
+                            <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>
+                                {{ year }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Load Records
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Salary Records Table -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list"></i> Salary Records for {{ selected_month_name }}
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if teacher_salary_data %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Teacher</th>
+                                <th>Department</th>
+                                <th>Base Salary</th>
+                                <th>Bonus/Deductions</th>
+                                <th>Net Salary</th>
+                                <th>Status</th>
+                                <th>Payment Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in teacher_salary_data %}
+                            <tr class="{% if data.salary_record.is_paid %}table-success{% endif %}">
+                                <td>
+                                    <div>
+                                        <strong>{{ data.teacher.full_name }}</strong>
+                                        {% if data.salary_record.notes %}
+                                            <i class="fas fa-sticky-note ms-1 text-info" 
+                                               data-bs-toggle="tooltip" 
+                                               data-bs-placement="top" 
+                                               title="Notes: {{ data.salary_record.notes|truncatewords:10 }}"></i>
+                                        {% endif %}
+                                        <br>
+                                        <small class="text-muted">{{ data.teacher.teacher_id }}</small>
+                                    </div>
+                                </td>
+                                <td>{{ data.teacher.department }}</td>
+                                <td>Rs.{{ data.salary_record.base_salary|floatformat:0 }}</td>
+                                <td>
+                                    {% if data.salary_record.bonus > 0 %}
+                                        <small class="text-success">+Rs.{{ data.salary_record.bonus|floatformat:0 }}</small>
+                                    {% endif %}
+                                    {% if data.salary_record.deductions > 0 %}
+                                        <small class="text-danger">-Rs.{{ data.salary_record.deductions|floatformat:0 }}</small>
+                                    {% endif %}
+                                    {% if data.salary_record.bonus == 0 and data.salary_record.deductions == 0 %}
+                                        <span class="text-muted">None</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>Rs.{{ data.salary_record.net_salary|floatformat:0 }}</strong>
+                                </td>
+                                <td>
+                                    {% if data.salary_record.is_paid %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check"></i> Paid
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock"></i> Pending
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if data.salary_record.payment_date %}
+                                        {{ data.salary_record.payment_date|date:"M d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">Not paid</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not data.salary_record.is_paid %}
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-success salary-btn" 
+                                                    data-salary-id="{{ data.salary_record.id }}"
+                                                    data-teacher-name="{{ data.teacher.full_name|escapejs }}"
+                                                    data-net-salary="{{ data.salary_record.net_salary }}">
+                                                <i class="fas fa-hand-holding-usd"></i> Mark Paid
+                                            </button>
+                                            <button class="btn btn-sm btn-info" 
+                                                    onclick="showSalaryHistory('{{ data.teacher.id }}', '{{ data.teacher.full_name|escapejs }}')"
+                                                    title="View Salary History">
+                                                <i class="fas fa-history"></i>
+                                            </button>
+                                        </div>
+                                    {% else %}
+                                        <div class="btn-group" role="group">
+                                            <span class="text-success">
+                                                <i class="fas fa-check-circle"></i> Completed
+                                            </span>
+                                            <button class="btn btn-sm btn-info" 
+                                                    onclick="showSalaryHistory('{{ data.teacher.id }}', '{{ data.teacher.full_name|escapejs }}')"
+                                                    title="View Salary History">
+                                                <i class="fas fa-history"></i>
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-wallet fa-3x text-muted mb-3"></i>
+                    <h5>No salary records found</h5>
+                    <p class="text-muted">No teachers with salary information for {{ selected_month_name }}.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Salary History Modal -->
+<div class="modal fade" id="salaryHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-history"></i> Salary History
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="salary_history_content">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading salary history...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Salary Payment Modal -->
+<div class="modal fade" id="salaryPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-hand-holding-usd"></i> Mark Salary Payment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="salaryPaymentForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="salary_record_id" name="salary_record_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Teacher:</label>
+                        <div id="teacher_info" class="fw-bold"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Net Salary:</label>
+                        <div id="salary_amount" class="fw-bold text-success"></div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bonus" class="form-label">Bonus (Rs.)</label>
+                                <input type="number" class="form-control" id="bonus" name="bonus" 
+                                       step="0.01" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deductions" class="form-label">Deductions (Rs.)</label>
+                                <input type="number" class="form-control" id="deductions" name="deductions" 
+                                       step="0.01" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_method_salary" class="form-label">Payment Method</label>
+                        <select class="form-select" id="payment_method_salary" name="payment_method">
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cash">Cash</option>
+                            <option value="cheque">Cheque</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes_salary" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes_salary" name="notes" rows="2" placeholder="Add any notes about this salary payment..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitSalaryPayment()">
+                    <i class="fas fa-save"></i> Mark as Paid
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showSalaryPaymentModal(salaryRecordId, teacherName, netSalary) {
+    document.getElementById('salary_record_id').value = salaryRecordId;
+    document.getElementById('teacher_info').textContent = teacherName;
+    document.getElementById('salary_amount').textContent = 'Rs.' + netSalary.toLocaleString();
+    
+    // Clear form
+    document.getElementById('salaryPaymentForm').reset();
+    document.getElementById('salary_record_id').value = salaryRecordId; // Reset hidden field
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('salaryPaymentModal')).show();
+}
+
+function submitSalaryPayment() {
+    const form = document.getElementById('salaryPaymentForm');
+    const formData = new FormData(form);
+    
+    fetch('{% url "courses:mark-salary-payment" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload(); // Refresh the page to show updated data
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error marking salary payment: ' + error);
+    });
+}
+
+function showSalaryHistory(teacherId, teacherName) {
+    document.getElementById('salary_history_content').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading salary history for ${teacherName}...</p>
+        </div>
+    `;
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('salaryHistoryModal')).show();
+    
+    // Fetch salary history
+    fetch(`{% url 'courses:teacher-salary-history' '0' %}`.replace('0', teacherId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let historyHtml = `
+                <div class="mb-3">
+                    <h6><i class="fas fa-chalkboard-teacher"></i> ${teacherName}</h6>
+                    <small class="text-muted">Complete salary payment history and notes</small>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Month/Year</th>
+                                <th>Base Salary</th>
+                                <th>Bonus</th>
+                                <th>Deductions</th>
+                                <th>Net Salary</th>
+                                <th>Method</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            if (data.salaries && data.salaries.length > 0) {
+                data.salaries.forEach(salary => {
+                    const monthYear = `${salary.month_name} ${salary.year}`;
+                    const notes = salary.notes || '<em class="text-muted">No notes</em>';
+                    const method = salary.payment_method || 'Not specified';
+                    const bonus = salary.bonus > 0 ? `Rs.${salary.bonus.toLocaleString()}` : '-';
+                    const deductions = salary.deductions > 0 ? `Rs.${salary.deductions.toLocaleString()}` : '-';
+                    
+                    historyHtml += `
+                        <tr>
+                            <td>${monthYear}</td>
+                            <td>Rs.${salary.base_salary.toLocaleString()}</td>
+                            <td class="text-success">${bonus}</td>
+                            <td class="text-danger">${deductions}</td>
+                            <td><strong>Rs.${salary.net_salary.toLocaleString()}</strong></td>
+                            <td>${method}</td>
+                            <td>${notes}</td>
+                        </tr>
+                    `;
+                });
+                
+                // Add summary row
+                historyHtml += `
+                    <tr class="table-info">
+                        <td><strong>Total Paid</strong></td>
+                        <td colspan="3"></td>
+                        <td><strong>Rs.${data.total_paid.toLocaleString()}</strong></td>
+                        <td colspan="2"></td>
+                    </tr>
+                `;
+            } else {
+                historyHtml += '<tr><td colspan="7" class="text-center text-muted">No salary history found</td></tr>';
+            }
+            
+            historyHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('salary_history_content').innerHTML = historyHtml;
+        } else {
+            document.getElementById('salary_history_content').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Error loading salary history: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById('salary_history_content').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Error loading salary history: ${error}
+            </div>
+        `;
+    });
+}
+
+function getMonthName(monthNumber) {
+    const months = [
+        '', 'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[parseInt(monthNumber)];
+}
+
+// Event listeners and initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Add event listeners to salary buttons
+    document.querySelectorAll('.salary-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const salaryRecordId = this.getAttribute('data-salary-id');
+            const teacherName = this.getAttribute('data-teacher-name');
+            const netSalary = parseFloat(this.getAttribute('data-net-salary'));
+            showSalaryPaymentModal(salaryRecordId, teacherName, netSalary);
+        });
+    });
+});
+</script>
+{% endblock %}

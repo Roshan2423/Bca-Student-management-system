@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Grade Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .grade-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: none;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .grade-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-align: center;
+        padding: 25px;
+    }
+    
+    .exam-type-card {
+        border-left: 5px solid;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .exam-type-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .terminal-card { border-left-color: #28a745; }
+    .mid-terminal-card { border-left-color: #ffc107; }
+    .board-card { border-left-color: #dc3545; }
+    
+    .quick-action-btn {
+        border-radius: 25px;
+        padding: 15px 25px;
+        font-weight: 600;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
+    
+    .recent-activity {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .activity-item {
+        border-left: 3px solid #007bff;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+        border-radius: 0 10px 10px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="grade-card stats-card">
+                <h1 class="mb-3">
+                    <i class="fas fa-graduation-cap fa-3x mb-3"></i><br>
+                    Grade Management System
+                </h1>
+                <p class="mb-0 fs-5">Manage student examinations and track academic performance</p>
+                <p class="mb-0 opacity-75">60 Total Marks • 24 Pass Marks • Auto Pass/Fail Calculation</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="grade-card">
+                <div class="card-body text-center">
+                    <div class="text-primary">
+                        <i class="fas fa-users fa-3x mb-3"></i>
+                        <h3 class="text-primary">{{ total_students }}</h3>
+                        <p class="mb-0">Total Students</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="grade-card">
+                <div class="card-body text-center">
+                    <div class="text-success">
+                        <i class="fas fa-book fa-3x mb-3"></i>
+                        <h3 class="text-success">{{ total_subjects }}</h3>
+                        <p class="mb-0">Total Subjects</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="grade-card">
+                <div class="card-body text-center">
+                    <div class="text-info">
+                        <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                        <h3 class="text-info">{{ total_grades }}</h3>
+                        <p class="mb-0">Grades Assigned</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="grade-card">
+                <div class="card-body text-center">
+                    <div class="text-warning">
+                        <i class="fas fa-chart-line fa-3x mb-3"></i>
+                        <h3 class="text-warning">{{ exam_types.count }}</h3>
+                        <p class="mb-0">Exam Types</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column - Quick Actions -->
+        <div class="col-md-4">
+            <div class="grade-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'grades:assign-grades' %}" class="quick-action-btn btn-success">
+                        <i class="fas fa-plus-circle fa-2x d-block mb-2"></i>
+                        Assign Grades
+                        <small class="d-block mt-1">Enter exam marks for students</small>
+                    </a>
+                    
+                    <a href="{% url 'grades:reports' %}" class="quick-action-btn btn-info">
+                        <i class="fas fa-chart-bar fa-2x d-block mb-2"></i>
+                        View Reports
+                        <small class="d-block mt-1">Academic performance analytics</small>
+                    </a>
+                    
+                    {% if request.user.role == 'student' %}
+                    <a href="{% url 'grades:student-grades' %}" class="quick-action-btn btn-warning">
+                        <i class="fas fa-eye fa-2x d-block mb-2"></i>
+                        My Grades
+                        <small class="d-block mt-1">View your exam results</small>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Column - Exam Types -->
+        <div class="col-md-4">
+            <div class="grade-card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>Exam Types
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for exam_type in exam_types %}
+                    <div class="exam-type-card 
+                        {% if exam_type.exam_code == '1st_terminal' %}terminal-card
+                        {% elif exam_type.exam_code == 'mid_terminal' %}mid-terminal-card
+                        {% else %}board-card{% endif %}">
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 fw-bold">{{ exam_type.exam_name }}</h6>
+                                <small class="text-muted">{{ exam_type.description }}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="badge bg-light text-dark">
+                                    {{ exam_type.total_marks }} marks
+                                </div>
+                                <br>
+                                <small class="text-muted">Pass: {{ exam_type.pass_marks }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-clipboard fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No exam types configured</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Recent Activity -->
+        <div class="col-md-4">
+            <div class="grade-card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="recent-activity">
+                        {% for grade in recent_grades %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ grade.student.full_name }}</h6>
+                                    <small class="text-muted">{{ grade.subject.subject_name }}</small><br>
+                                    <small class="text-muted">{{ grade.exam_type.exam_name }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge {% if grade.is_pass %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ grade.marks_obtained }}/{{ grade.total_marks }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">{{ grade.assigned_date|date:"M d" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-clock fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No recent activity</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-home me-2"></i>Back to Main Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

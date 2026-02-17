@@ -1,0 +1,670 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ subject.subject_name }} - Subject Details{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Clean Subject Detail Dashboard - Matching Teacher Dashboard Style */
+.subject-detail-container {
+    padding: 20px 0;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Clean Subject Header */
+.subject-header-clean {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+}
+
+.subject-header-clean h1 {
+    margin: 0 0 20px 0;
+    font-size: 2.2rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.subject-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 5px;
+    opacity: 0.9;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Content Section */
+.content-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px;
+}
+
+.section-title-clean {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.section-title-clean::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: #007bff;
+}
+
+.section-title-clean .title-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title-clean .badge {
+    background: #007bff;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Clean Table */
+.clean-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.clean-table th {
+    background: #f8f9fa;
+    color: #495057;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.clean-table td {
+    padding: 15px;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.clean-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-action-clean {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary-clean {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary-clean:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-success-clean {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success-clean:hover {
+    background: #218838;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-warning-clean {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-warning-clean:hover {
+    background: #e0a800;
+    color: #212529;
+    text-decoration: none;
+}
+
+.btn-danger-clean {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger-clean:hover {
+    background: #c82333;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-info-clean {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info-clean:hover {
+    background: #138496;
+    color: white;
+    text-decoration: none;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-active {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-overdue {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Empty State */
+.empty-state-clean {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-state-clean i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #dee2e6;
+}
+
+.empty-state-clean h5 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 10px;
+}
+
+.empty-state-clean p {
+    color: #6c757d;
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .subject-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .section-title-clean {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .subject-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .content-section {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="subject-detail-container">
+    <div class="container">
+        {% if subject %}
+        <!-- Clean Subject Header -->
+        <div class="subject-header-clean">
+            <h1><i class="fas fa-book me-2"></i>{{ subject.subject_name }}</h1>
+            <div class="subject-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Subject Code</span>
+                    <span class="stat-value">{{ subject.subject_code }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Semester</span>
+                    <span class="stat-value">{{ subject.semester }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Pending Assignments</span>
+                    <span class="stat-value">{{ pending_assignments|length|default:"0" }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Pending Submissions</span>
+                    <span class="stat-value">{{ pending_submissions|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Materials Section -->
+        <div class="content-section">
+            <div class="section-title-clean">
+                <div class="title-content">
+                    <i class="fas fa-book me-2"></i>Course Materials
+                    <span class="badge">{{ materials|length|default:"0" }}</span>
+                </div>
+                {% if is_teacher %}
+                <a href="{% url 'courses:upload-material' subject.subject_code %}" class="btn btn-primary-clean btn-sm">
+                    <i class="fas fa-plus me-1"></i>Add Material
+                </a>
+                {% endif %}
+            </div>
+            
+            {% if materials %}
+                <div class="table-responsive">
+                    <table class="clean-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>File</th>
+                                <th>Uploaded By</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for material in materials %}
+                            <tr>
+                                <td><strong>{{ material.title }}</strong></td>
+                                <td>{{ material.description|default:"No description"|truncatechars:50 }}</td>
+                                <td>
+                                    <div>
+                                        <div><strong>{{ material.file_name }}</strong></div>
+                                        {% if material.file_size %}
+                                            <small class="text-muted">{{ material.file_size|filesizeformat }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ material.uploaded_by.first_name }} {{ material.uploaded_by.last_name }}</td>
+                                <td>{{ material.upload_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'courses:download-material-file' material.id %}" 
+                                           class="btn-action-clean btn-success-clean" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <a href="{% url 'courses:view-material-file' material.id %}" 
+                                           class="btn-action-clean btn-primary-clean" target="_blank" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if is_teacher %}
+                                        <button class="btn-action-clean btn-warning-clean" 
+                                                title="Edit"
+                                                data-material-id="{{ material.id }}"
+                                                data-material-title="{{ material.title }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-action-clean btn-danger-clean" 
+                                                title="Delete"
+                                                data-material-id="{{ material.id }}"
+                                                data-material-title="{{ material.title }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state-clean">
+                    <i class="fas fa-book-open"></i>
+                    <h5>No Materials Available</h5>
+                    <p>Course materials will appear here when uploaded by the teacher.</p>
+                    {% if is_teacher %}
+                        <a href="{% url 'courses:upload-material' subject.subject_code %}" class="btn btn-primary-clean" style="padding: 10px 20px; border-radius: 8px;">
+                            <i class="fas fa-plus me-2"></i>Upload First Material
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Assignments Section -->
+        <div class="content-section">
+            <div class="section-title-clean">
+                <div class="title-content">
+                    <i class="fas fa-tasks me-2"></i>Assignments
+                    <span class="badge">{{ assignments|length|default:"0" }}</span>
+                </div>
+                {% if is_teacher %}
+                <a href="{% url 'courses:create-assignment' subject.subject_code %}" class="btn btn-success-clean btn-sm">
+                    <i class="fas fa-plus me-1"></i>Create Assignment
+                </a>
+                {% endif %}
+            </div>
+            
+            {% if assignments %}
+                <div class="table-responsive">
+                    <table class="clean-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in assignments %}
+                            <tr>
+                                <td><strong>{{ assignment.title }}</strong></td>
+                                <td>{{ assignment.description|default:"No description"|truncatechars:50 }}</td>
+                                <td>{{ assignment.due_date|date:"M d, Y g:i A" }}</td>
+                                <td>
+                                    {% if assignment.is_overdue %}
+                                        <span class="status-badge status-overdue">Overdue</span>
+                                    {% else %}
+                                        <span class="status-badge status-active">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'courses:assignment-detail' assignment.id %}" 
+                                           class="btn-action-clean btn-info-clean" title="Details">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                        {% if assignment.assignment_file_path %}
+                                        <a href="{% url 'courses:download-assignment-file' assignment.id %}" 
+                                           class="btn-action-clean btn-success-clean" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% endif %}
+                                        {% if request.user.role == 'student' %}
+                                            {% if not assignment.is_overdue %}
+                                                <a href="{% url 'courses:submit-assignment' assignment.id %}" 
+                                                   class="btn-action-clean btn-primary-clean" title="Submit">
+                                                    <i class="fas fa-upload"></i>
+                                                </a>
+                                            {% else %}
+                                                <span class="btn-action-clean" style="background: #6c757d; color: white;" title="Overdue">
+                                                    <i class="fas fa-clock"></i>
+                                                </span>
+                                            {% endif %}
+                                        {% endif %}
+                                        {% if is_teacher %}
+                                        <a href="{% url 'courses:assignment-submissions' assignment.id %}" 
+                                           class="btn-action-clean btn-info-clean" title="Submissions">
+                                            <i class="fas fa-users"></i>
+                                        </a>
+                                        <button class="btn-action-clean btn-warning-clean" 
+                                                title="Edit"
+                                                data-assignment-id="{{ assignment.id }}"
+                                                data-assignment-title="{{ assignment.title }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-action-clean btn-danger-clean" 
+                                                title="Delete"
+                                                data-assignment-id="{{ assignment.id }}"
+                                                data-assignment-title="{{ assignment.title }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state-clean">
+                    <i class="fas fa-tasks"></i>
+                    <h5>No Assignments Available</h5>
+                    <p>Assignments will appear here when created by the teacher.</p>
+                    {% if is_teacher %}
+                        <a href="{% url 'courses:create-assignment' subject.subject_code %}" class="btn btn-success-clean" style="padding: 10px 20px; border-radius: 8px;">
+                            <i class="fas fa-plus me-2"></i>Create First Assignment
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Student Submissions Section (Only for Students) -->
+        {% if request.user.role == 'student' and submissions %}
+        <div class="content-section">
+            <div class="section-title-clean">
+                <div class="title-content">
+                    <i class="fas fa-file-upload me-2"></i>My Submissions
+                    <span class="badge">{{ submissions|length|default:"0" }}</span>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>Assignment</th>
+                            <th>Submitted On</th>
+                            <th>Status</th>
+                            <th>Teacher Feedback</th>
+                            <th>File</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for submission in submissions %}
+                        <tr>
+                            <td><strong>{{ submission.assignment.title }}</strong></td>
+                            <td>{{ submission.submission_date|date:"M d, Y g:i A" }}</td>
+                            <td>
+                                {% if submission.status == 'approved' %}
+                                    <span class="status-badge" style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb;">
+                                        <i class="fas fa-check-circle me-1"></i>Approved
+                                    </span>
+                                {% elif submission.status == 'rejected' %}
+                                    <span class="status-badge" style="background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">
+                                        <i class="fas fa-times-circle me-1"></i>Rejected
+                                    </span>
+                                {% elif submission.status == 'graded' %}
+                                    <span class="status-badge" style="background: #d1ecf1; color: #0c5460; border: 1px solid #b8d4da;">
+                                        <i class="fas fa-star me-1"></i>Graded ({{ submission.marks_obtained }})
+                                    </span>
+                                {% elif submission.status == 'submitted' or submission.status == 'late' %}
+                                    <span class="status-badge" style="background: #fff3cd; color: #856404; border: 1px solid #ffeaa7;">
+                                        <i class="fas fa-clock me-1"></i>{% if submission.is_late %}Late Submitted{% else %}Under Review{% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge" style="background: #e2e3e5; color: #495057; border: 1px solid #d6d8db;">
+                                        {{ submission.status_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if submission.status == 'approved' and submission.teacher_comments %}
+                                    <div class="feedback-box" style="background: #d4edda; border-left: 4px solid #28a745; padding: 10px; border-radius: 5px;">
+                                        <strong>Teacher Notes:</strong>
+                                        <p style="margin: 5px 0 0 0; font-style: italic;">{{ submission.teacher_comments }}</p>
+                                        {% if submission.reviewed_by %}
+                                            <small class="text-muted d-block mt-2">
+                                                <i class="fas fa-user me-1"></i>{{ submission.reviewed_by.full_name }} on {{ submission.reviewed_date|date:"M d, Y" }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                {% elif submission.status == 'rejected' %}
+                                    <div class="feedback-box" style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 10px; border-radius: 5px;">
+                                        <strong>Rejection Reason:</strong>
+                                        <p style="margin: 5px 0 0 0; font-weight: 600; color: #721c24;">{{ submission.rejection_reason|default:"No specific reason provided" }}</p>
+                                        {% if submission.feedback %}
+                                            <strong style="display: block; margin-top: 10px;">Additional Feedback:</strong>
+                                            <p style="margin: 5px 0 0 0; font-style: italic;">{{ submission.feedback }}</p>
+                                        {% endif %}
+                                        {% if submission.reviewed_by %}
+                                            <small class="text-muted d-block mt-2">
+                                                <i class="fas fa-user me-1"></i>{{ submission.reviewed_by.full_name }} on {{ submission.reviewed_date|date:"M d, Y" }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                {% elif submission.status == 'graded' and submission.feedback %}
+                                    <div class="feedback-box" style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px; border-radius: 5px;">
+                                        <strong>Teacher Feedback:</strong>
+                                        <p style="margin: 5px 0 0 0; font-style: italic;">{{ submission.feedback }}</p>
+                                        {% if submission.graded_by %}
+                                            <small class="text-muted d-block mt-2">
+                                                <i class="fas fa-user me-1"></i>{{ submission.graded_by.full_name }} on {{ submission.graded_date|date:"M d, Y" }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-hourglass-half me-1"></i>Awaiting review
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if submission.submission_file_name %}
+                                    <div>
+                                        <strong>{{ submission.submission_file_name }}</strong>
+                                        {% if submission.file_size %}
+                                            <small class="text-muted d-block">{{ submission.file_size|filesizeformat }}</small>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">Text only</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    {% if submission.submission_file_path %}
+                                    <a href="{% url 'courses:download-submission-file' submission.id %}" 
+                                       class="btn-action-clean btn-success-clean" title="Download My File">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'courses:assignment-detail' submission.assignment.id %}" 
+                                       class="btn-action-clean btn-info-clean" title="View Assignment">
+                                        <i class="fas fa-info-circle"></i>
+                                    </a>
+                                    {% if submission.status == 'rejected' %}
+                                    <a href="{% url 'courses:submit-assignment' submission.assignment.id %}" 
+                                       class="btn-action-clean btn-warning-clean" title="Resubmit">
+                                        <i class="fas fa-redo"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Subject Description -->
+        {% if subject.description %}
+        <div class="content-section">
+            <div class="section-title-clean">
+                <div class="title-content">
+                    <i class="fas fa-info-circle me-2"></i>Subject Description
+                </div>
+            </div>
+            <p style="color: #495057; line-height: 1.6; font-size: 1rem;">{{ subject.description }}</p>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Error State -->
+        <div class="alert alert-danger text-center" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; border-radius: 10px; padding: 40px;">
+            <i class="fas fa-exclamation-triangle fa-3x mb-3" style="color: #721c24;"></i>
+            <h4 style="color: #721c24; font-weight: 600;">Subject Not Found</h4>
+            <p style="color: #721c24; margin-bottom: 30px;">The requested subject could not be found or you don't have access to it.</p>
+            <a href="{% if request.user.role == 'teacher' %}{% url 'courses:teacher-dashboard' %}{% else %}{% url 'courses:student-dashboard' %}{% endif %}" 
+               class="btn btn-primary-clean" style="padding: 10px 20px; border-radius: 8px; text-decoration: none;">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- CSRF Token for AJAX requests -->
+{% csrf_token %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/courses/subject_detail.js' %}"></script>
+{% endblock %}

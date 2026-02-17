@@ -1,0 +1,745 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Assignments - Student Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assignments-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 30px;
+        color: white;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    }
+    
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--accent-color);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stats-pending { --accent-color: #3498db; }
+    .stats-submitted { --accent-color: #2ecc71; }
+    .stats-overdue { --accent-color: #e74c3c; }
+    .stats-graded { --accent-color: #9b59b6; }
+    
+    .stats-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        background: var(--accent-color);
+    }
+    
+    .stats-info h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        color: #2c3e50;
+    }
+    
+    .stats-info p {
+        margin: 0;
+        color: #7f8c8d;
+        font-weight: 500;
+    }
+    
+    .stats-info small {
+        color: #95a5a6;
+        font-size: 0.85rem;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        padding: 6px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .section-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.8rem;
+    }
+    
+    .section-pending { background: #3498db; }
+    .section-submitted { background: #2ecc71; }
+    .section-overdue { background: #e74c3c; }
+    .section-graded { background: #9b59b6; }
+    
+    .assignment-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 12px;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-bottom: 16px;
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .assignment-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--card-accent, #667eea);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .assignment-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.2);
+    }
+    
+    .assignment-card:hover::before {
+        opacity: 1;
+    }
+    
+    .assignment-card.pending { 
+        --card-accent: #3498db;
+        background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+        border-color: rgba(52, 152, 219, 0.2);
+    }
+    .assignment-card.submitted { --card-accent: #2ecc71; }
+    .assignment-card.overdue { 
+        --card-accent: #e74c3c;
+        background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
+        border-color: rgba(231, 76, 60, 0.3);
+        animation: pulse-red 2s infinite;
+    }
+    .assignment-card.graded { --card-accent: #9b59b6; }
+    
+    @keyframes pulse-red {
+        0%, 100% { box-shadow: 0 4px 20px rgba(231, 76, 60, 0.1); }
+        50% { box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3); }
+    }
+    
+    .assignment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .assignment-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .assignment-header {
+        padding: 0;
+        border-bottom: none;
+    }
+    
+    .assignment-title {
+        margin-bottom: 8px;
+    }
+    
+    .assignment-title h5 {
+        margin: 0 0 4px 0;
+        color: #2c3e50;
+        font-weight: 600;
+        line-height: 1.2;
+        font-size: 1.1rem;
+    }
+    
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: none;
+        flex-shrink: 0;
+    }
+    
+    .status-pending {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+    }
+    
+    .status-submitted {
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        color: white;
+    }
+    
+    .status-overdue {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+    }
+    
+    .status-graded {
+        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        color: white;
+    }
+    
+    .subject-info {
+        color: #7f8c8d;
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin: 0 0 8px 0;
+    }
+    
+    .assignment-body {
+        padding: 0;
+        display: none;
+    }
+    
+    .assignment-description {
+        color: #5a6c7d;
+        line-height: 1.3;
+        margin-bottom: 10px;
+        font-size: 0.85rem;
+    }
+    
+    .assignment-meta {
+        display: flex;
+        gap: 16px;
+        margin-top: 4px;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    
+    .meta-icon {
+        width: 12px;
+        height: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .due-date {
+        font-weight: 600;
+    }
+    
+    .due-soon { color: #f39c12; }
+    .due-overdue { color: #e74c3c; }
+    .due-safe { color: #27ae60; }
+    
+    .assignment-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+    
+    .btn-modern {
+        padding: 6px 12px;
+        border-radius: 5px;
+        border: none;
+        font-weight: 600;
+        font-size: 0.75rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+        min-width: 100px;
+    }
+    
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+    }
+    
+    .btn-primary-modern:hover {
+        background: linear-gradient(135deg, #2980b9, #21618c);
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .btn-success-modern {
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        color: white;
+    }
+    
+    .btn-success-modern:hover {
+        background: linear-gradient(135deg, #27ae60, #229954);
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .btn-secondary-modern {
+        background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        color: white;
+    }
+    
+    .btn-secondary-modern:hover {
+        background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .alert-modern {
+        border: none;
+        border-radius: 4px;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+        border-left: 2px solid;
+        font-size: 0.75rem;
+    }
+    
+    .alert-info-modern {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        border-left-color: #2196f3;
+        color: #1565c0;
+    }
+    
+    .alert-warning-modern {
+        background: linear-gradient(135deg, #fff3e0, #ffcc02);
+        border-left-color: #ff9800;
+        color: #ef6c00;
+    }
+    
+    .score-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 15px;
+        border: 1px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.8rem;
+    }
+    
+    .score-pass {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        border-color: #28a745;
+        color: #155724;
+    }
+    
+    .score-fail {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        border-color: #dc3545;
+        color: #721c24;
+    }
+    
+    .subject-link {
+        color: #667eea !important;
+        text-decoration: none !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .subject-link:hover {
+        color: #5a67d8 !important;
+        text-decoration: underline !important;
+        transform: translateX(2px);
+    }
+    
+    .subject-link i {
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="assignments-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <div class="header-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div>
+                    <h1 class="mb-1">My Assignments</h1>
+                    <p class="mb-0 opacity-75">{{ student.first_name }} {{ student.last_name }} • Student ID: {{ student.student_id }}</p>
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="mb-1">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    {{ "now"|date:"F j, Y" }}
+                </div>
+                <div>
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    BCA Program • Semester {{ student.current_semester }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stats-card stats-pending">
+            <div class="stats-content">
+                <div class="stats-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stats-info">
+                    <h3>{{ pending_count }}</h3>
+                    <p>Pending Assignments</p>
+                    <small>Need to be submitted</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-card stats-submitted">
+            <div class="stats-content">
+                <div class="stats-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-info">
+                    <h3>{{ submitted_assignments|length }}</h3>
+                    <p>Submitted Assignments</p>
+                    <small>Awaiting evaluation</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-card stats-overdue">
+            <div class="stats-content">
+                <div class="stats-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stats-info">
+                    <h3>{{ overdue_assignments|length }}</h3>
+                    <p>Overdue Assignments</p>
+                    <small>Past deadline</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-card stats-graded">
+            <div class="stats-content">
+                <div class="stats-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stats-info">
+                    <h3>{{ graded_assignments|length }}</h3>
+                    <p>Graded Assignments</p>
+                    <small>Results available</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Assignments Section -->
+    {% if pending_count > 0 %}
+    <div class="section-header pending">
+        <div class="section-icon section-pending">
+            <i class="fas fa-clock"></i>
+        </div>
+        <h3 class="mb-0">Pending Assignments</h3>
+    </div>
+    
+    {% for assignment_data in pending_assignments %}
+    {% with assignment=assignment_data.assignment %}
+    <div class="assignment-card pending">
+        <div class="assignment-info">
+            <div class="assignment-title">
+                <div class="assignment-priority priority-high"></div>
+                <h5>{{ assignment.title|default:"Untitled Assignment" }}</h5>
+            </div>
+            <p class="subject-info">
+                <div class="subject-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                {% if assignment.subject %}
+                    <a href="{% url 'courses:subject-detail' assignment.subject.subject_code %}" class="subject-link">
+                        {{ assignment.subject.subject_name }} ({{ assignment.subject.subject_code }})
+                    </a>
+                {% else %}
+                    <span class="text-muted">No Subject Assigned</span>
+                {% endif %}
+            </p>
+            <div class="assignment-meta">
+                <div class="meta-badge">
+                    <i class="fas fa-calendar-alt"></i>
+                    Due: {{ assignment.due_date|date:"M j, Y g:i A"|default:"Not Set" }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="assignment-actions">
+            <span class="status-badge status-pending">PENDING</span>
+            {% if assignment.id %}
+            <a href="{% url 'courses:submit-assignment' assignment.id %}" class="btn-modern btn-primary-modern">
+                <i class="fas fa-upload"></i>
+                Submit
+            </a>
+            <a href="{% url 'courses:assignment-detail' assignment.id %}" class="btn-modern btn-secondary-modern">
+                <i class="fas fa-info-circle"></i>
+                Details
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+    {% endif %}
+
+    <!-- Submitted Assignments Section -->
+    {% if submitted_assignments %}
+    <div class="section-header submitted">
+        <div class="section-icon section-submitted">
+            <i class="fas fa-check"></i>
+        </div>
+        <h3 class="mb-0">Submitted Assignments</h3>
+    </div>
+    
+    {% for assignment_data in submitted_assignments %}
+    {% with assignment=assignment_data.assignment %}
+    <div class="assignment-card submitted">
+        <div class="assignment-info">
+            <div class="assignment-title">
+                <h5>{{ assignment.title }}</h5>
+            </div>
+            <p class="subject-info">
+                {% if assignment.subject %}
+                    <a href="{% url 'courses:subject-detail' assignment.subject.subject_code %}" class="subject-link">
+                        {{ assignment.subject.subject_name }} ({{ assignment.subject.subject_code }})
+                    </a>
+                {% else %}
+                    <span class="text-muted">No Subject Assigned</span>
+                {% endif %}
+            </p>
+            <div class="assignment-meta">
+                <span>Due: {{ assignment.due_date|date:"M j, Y g:i A" }}</span>
+            </div>
+        </div>
+        
+        <div class="assignment-actions">
+            <span class="status-badge status-submitted">SUBMITTED</span>
+            {% if assignment.id %}
+            <a href="{% url 'courses:assignment-detail' assignment.id %}" class="btn-modern btn-success-modern">
+                <i class="fas fa-eye"></i>
+                View
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+    {% endif %}
+
+    <!-- Overdue Assignments Section -->
+    {% if overdue_assignments %}
+    <div class="section-header overdue">
+        <div class="section-icon section-overdue">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 class="mb-0">Overdue Assignments</h3>
+    </div>
+    
+    {% for assignment_data in overdue_assignments %}
+    {% with assignment=assignment_data.assignment %}
+    <div class="assignment-card overdue">
+        <div class="assignment-info">
+            <div class="assignment-title">
+                <h5>{{ assignment.title }} <span style="color: #e74c3c; font-weight: bold; margin-left: 8px; font-size: 0.8rem;">⚠️ OVERDUE</span></h5>
+            </div>
+            <p class="subject-info">
+                {% if assignment.subject %}
+                    <a href="{% url 'courses:subject-detail' assignment.subject.subject_code %}" class="subject-link">
+                        {{ assignment.subject.subject_name }} ({{ assignment.subject.subject_code }})
+                    </a>
+                {% else %}
+                    <span class="text-muted">No Subject Assigned</span>
+                {% endif %}
+            </p>
+            <div class="assignment-meta">
+                <div class="meta-badge" style="background: rgba(231, 76, 60, 0.15); color: #c0392b; border: 1px solid rgba(231, 76, 60, 0.3);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Overdue since: {{ assignment.due_date|date:"M j, Y g:i A" }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="assignment-actions">
+            <span class="status-badge status-overdue">OVERDUE</span>
+            {% if assignment.id %}
+            <a href="{% url 'courses:assignment-detail' assignment.id %}" class="btn-modern btn-secondary-modern">
+                <i class="fas fa-info-circle"></i>
+                Details
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+    {% endif %}
+
+    <!-- Graded Assignments Section -->
+    {% if graded_assignments %}
+    <div class="section-header graded">
+        <div class="section-icon section-graded">
+            <i class="fas fa-star"></i>
+        </div>
+        <h3 class="mb-0">Graded Assignments</h3>
+    </div>
+    
+    {% for assignment_data in graded_assignments %}
+    {% with assignment=assignment_data.assignment %}
+    <div class="assignment-card graded">
+        <div class="assignment-info">
+            <div class="assignment-title">
+                <h5>{{ assignment.title }}</h5>
+            </div>
+            <p class="subject-info">
+                {% if assignment.subject %}
+                    <a href="{% url 'courses:subject-detail' assignment.subject.subject_code %}" class="subject-link">
+                        {{ assignment.subject.subject_name }} ({{ assignment.subject.subject_code }})
+                    </a>
+                {% else %}
+                    <span class="text-muted">No Subject Assigned</span>
+                {% endif %}
+            </p>
+            <div class="assignment-meta">
+                <span>Due: {{ assignment.due_date|date:"M j, Y g:i A" }}</span>
+                <span class="score-display {% if assignment.marks_obtained >= assignment.passing_marks %}score-pass{% else %}score-fail{% endif %}">
+                    Grade: {{ assignment.marks_obtained }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="assignment-actions">
+            <span class="status-badge status-graded">GRADED</span>
+            {% if assignment.id %}
+            <a href="{% url 'courses:assignment-detail' assignment.id %}" class="btn-modern btn-secondary-modern">
+                <i class="fas fa-chart-bar"></i>
+                View Grade
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+    {% endif %}
+
+    <!-- No Assignments Message -->
+    {% if not submitted_assignments and not overdue_assignments and not pending_assignments and not graded_assignments %}
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-clipboard-list fa-4x text-muted"></i>
+        </div>
+        <h4 class="text-muted">No Assignments Available</h4>
+        <p class="text-muted">Your assignments will appear here when they are published by your teachers.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add smooth animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.assignment-card, .stats-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

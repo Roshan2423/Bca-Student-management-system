@@ -1,0 +1,391 @@
+<!-- Updated: templates/students/detail.html - With Active/Inactive Management -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ student.first_name }} {{ student.last_name }} - Student Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if student %}
+    <div class="row">
+        <div class="col-12">
+            <!-- Header Section with Quick Actions -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1><i class="fas fa-user"></i> Student Details</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'students:list' %}">Students</a></li>
+                            <li class="breadcrumb-item active">{{ student.first_name }} {{ student.last_name }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{% url 'students:update' student.id %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Student
+                    </a>
+                    
+                    <!-- Status Toggle Button -->
+                    {% if student.is_active %}
+                        <a href="{% url 'students:toggle-status' student.id %}" 
+                           class="btn btn-outline-warning" 
+                           onclick="return confirm('Deactivate this student? They will not be able to log in.')">
+                            <i class="fas fa-user-slash"></i> Deactivate
+                        </a>
+                    {% else %}
+                        <a href="{% url 'students:toggle-status' student.id %}" 
+                           class="btn btn-outline-success"
+                           onclick="return confirm('Activate this student?')">
+                            <i class="fas fa-user-check"></i> Activate
+                        </a>
+                    {% endif %}
+                    
+                    <button type="button" class="btn btn-outline-danger" 
+                            onclick="confirmDelete('{{ student.id }}', '{{ student.first_name }} {{ student.last_name }}')">
+                        <i class="fas fa-trash"></i> Delete Student
+                    </button>
+                    <a href="{% url 'students:list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Student Information Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card{% if not student.is_active %} border-warning{% endif %}">
+                <div class="card-header{% if not student.is_active %} bg-warning text-dark{% endif %}">
+                    <h5 class="mb-0">
+                        <i class="fas fa-id-card"></i> Student Profile
+                        {% if not student.is_active %}
+                            <span class="badge bg-danger ms-2">Inactive</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="avatar-lg bg-primary rounded-circle text-white d-flex align-items-center justify-content-center mx-auto mb-3">
+                        <span style="font-size: 2rem; font-weight: bold;">
+                            {{ student.first_name|first }}{{ student.last_name|first }}
+                        </span>
+                    </div>
+                    <h4>{{ student.first_name }} {{ student.last_name }}</h4>
+                    <p class="text-muted mb-2">{{ student.student_id }}</p>
+                    
+                    <!-- Status Badge -->
+                    <span class="badge bg-{% if student.is_active %}success{% else %}danger{% endif %} mb-3">
+                        <i class="fas fa-{% if student.is_active %}check-circle{% else %}times-circle{% endif %}"></i>
+                        {% if student.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                    
+                    {% if not student.is_active %}
+                        <div class="alert alert-warning mb-3">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Inactive Student:</strong> Cannot log in to the system.
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Account Status -->
+                    <div class="mb-3">
+                        {% if has_account %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle"></i> Has Login Account
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-exclamation-triangle"></i> No Login Account
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h5 class="mb-0">{{ student.program }}</h5>
+                                <small class="text-muted">Program</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="mb-0">{{ student.current_semester }}</h5>
+                            <small class="text-muted">Semester</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Information -->
+        <div class="col-lg-8">
+            <div class="row">
+                <!-- Personal Information -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user"></i> Personal Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Full Name:</label>
+                                    <p>{{ student.first_name }} {{ student.last_name }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Email:</label>
+                                    <p><a href="mailto:{{ student.email }}">{{ student.email }}</a></p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Phone:</label>
+                                    <p>{{ student.phone_number|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Date of Birth:</label>
+                                    <p>{{ student.date_of_birth|date:"F d, Y"|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Gender:</label>
+                                    <p>{{ student.gender|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Address:</label>
+                                    <p>{{ student.address|default:"-" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Information -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-graduation-cap"></i> Academic Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Student ID:</label>
+                                    <p><span class="badge bg-primary">{{ student.student_id }}</span></p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Program:</label>
+                                    <p><span class="badge bg-success">{{ student.program }}</span></p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Current Semester:</label>
+                                    <p>{{ student.current_semester }} Semester</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Admission Date:</label>
+                                    <p>{{ student.admission_date|date:"F d, Y"|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Batch:</label>
+                                    <p>{{ student.batch|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Roll Number:</label>
+                                    <p>{{ student.roll_number|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Status:</label>
+                                    <p>
+                                        {% if student.is_active %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle"></i> Active Student
+                                            </span>
+                                            <br><small class="text-muted">Can access the system and attend classes</small>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times-circle"></i> Inactive Student
+                                            </span>
+                                            <br><small class="text-muted">Cannot log in or access system features</small>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Information -->
+                {% if has_account %}
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user-check"></i> Login Account
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Username:</label>
+                                <p>{{ user_account.email }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Account Created:</label>
+                                <p>{{ user_account.date_joined|date:"F d, Y"|default:"-" }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Last Login:</label>
+                                <p>{{ user_account.last_login|date:"F d, Y H:i"|default:"Never" }}</p>
+                            </div>
+                            <div class="mb-0">
+                                <label class="fw-bold text-muted">Account Status:</label>
+                                <p>
+                                    {% if user_account.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        <br><small class="text-success">Can log in</small>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                        <br><small class="text-danger">Cannot log in</small>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user-times"></i> No Login Account
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-0">
+                                This student doesn't have a login account yet.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Emergency Contact -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-phone-alt"></i> Emergency Contact
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Contact Name:</label>
+                                <p>{{ student.emergency_contact_name|default:"-" }}</p>
+                            </div>
+                            <div class="mb-0">
+                                <label class="fw-bold text-muted">Contact Phone:</label>
+                                <p>{{ student.emergency_contact_phone|default:"-" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Notes -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-sticky-note"></i> Additional Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Registration Date:</label>
+                                    <p>{{ student.created_at|date:"F d, Y H:i"|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="fw-bold text-muted">Last Updated:</label>
+                                    <p>{{ student.updated_at|date:"F d, Y H:i"|default:"-" }}</p>
+                                </div>
+                                <div class="col-12 mb-0">
+                                    <label class="fw-bold text-muted">Notes:</label>
+                                    <p>{{ student.notes|default:"No additional notes"|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-danger">
+                <h4>Student Not Found</h4>
+                <p>The requested student could not be found.</p>
+                <a href="{% url 'students:list' %}" class="btn btn-primary">Back to Students List</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete student <strong id="studentName"></strong>? 
+                This action cannot be undone and will remove all associated data including their login account.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Student</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header.bg-success {
+    background-color: #198754 !important;
+}
+
+.card-header.bg-warning {
+    background-color: #ffc107 !important;
+}
+</style>
+
+<script>
+function confirmDelete(studentId, studentName) {
+    document.getElementById('studentName').textContent = studentName;
+    document.getElementById('deleteForm').action = `/students/${studentId}/delete/`;
+    var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

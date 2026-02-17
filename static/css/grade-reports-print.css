@@ -1,0 +1,269 @@
+/* Grade Reports Print Styles - Optimized for A4 */
+
+/* Hide unnecessary elements when printing */
+@media print {
+    /* Hide navigation, filters, and UI elements */
+    .navbar,
+    .nav,
+    .btn,
+    .card-header,
+    .alert,
+    .pagination,
+    .footer,
+    form,
+    .no-print {
+        display: none !important;
+    }
+    
+    /* Page setup for A4 */
+    @page {
+        size: A4;
+        margin: 0.75in;
+        margin-top: 1in;
+        margin-bottom: 1in;
+    }
+    
+    /* Body and container adjustments */
+    body {
+        font-family: 'Times New Roman', serif !important;
+        font-size: 11pt !important;
+        line-height: 1.3 !important;
+        color: black !important;
+        background: white !important;
+    }
+    
+    .container, .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Print header */
+    .print-header {
+        text-align: center;
+        border-bottom: 2px solid #000;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+    }
+    
+    .print-header h1 {
+        font-size: 18pt;
+        font-weight: bold;
+        margin: 0;
+        color: #000;
+    }
+    
+    .print-header h2 {
+        font-size: 14pt;
+        margin: 5px 0;
+        color: #000;
+    }
+    
+    .print-header .report-info {
+        font-size: 10pt;
+        margin-top: 10px;
+        color: #333;
+    }
+    
+    /* Table styling for print */
+    .table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 9pt !important;
+        margin: 0 0 15px 0 !important;
+    }
+    
+    .table th,
+    .table td {
+        border: 1px solid #000 !important;
+        padding: 3px 5px !important;
+        text-align: left !important;
+        vertical-align: top !important;
+        word-wrap: break-word !important;
+    }
+    
+    .table th {
+        background-color: #e8e8e8 !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        font-size: 8pt !important;
+        color: #000 !important;
+    }
+    
+    .table td {
+        background-color: white !important;
+        font-size: 8pt !important;
+    }
+    
+    /* Specific column widths for better layout */
+    .print-table th:nth-child(1), .print-table td:nth-child(1) {
+        width: 25% !important; /* Student Name */
+    }
+    
+    .print-table th:nth-child(2), .print-table td:nth-child(2) {
+        width: 15% !important; /* Student ID */
+    }
+    
+    .print-table th:nth-child(4), .print-table td:nth-child(4) {
+        width: 8% !important; /* Marks */
+        text-align: center !important;
+    }
+    
+    .print-table th:nth-child(5), .print-table td:nth-child(5) {
+        width: 8% !important; /* Total */
+        text-align: center !important;
+    }
+    
+    .print-table th:nth-child(6), .print-table td:nth-child(6) {
+        width: 8% !important; /* Percentage */
+        text-align: center !important;
+    }
+    
+    .print-table th:nth-child(7), .print-table td:nth-child(7) {
+        width: 8% !important; /* Status */
+        text-align: center !important;
+    }
+    
+    .print-table th:nth-child(8), .print-table td:nth-child(8) {
+        width: 12% !important; /* Date */
+        text-align: center !important;
+    }
+    
+    /* Remove badges and colored elements */
+    .badge {
+        background: none !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+        padding: 2px 4px !important;
+        font-size: 8pt !important;
+    }
+    
+    /* Statistics cards for print - Force horizontal layout */
+    .print-stats {
+        display: table !important;
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border: 2px solid #000 !important;
+        margin-bottom: 20px !important;
+        padding: 0 !important;
+    }
+    
+    .print-stats .stat-item {
+        display: table-cell !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        padding: 15px 10px !important;
+        border-right: 1px solid #000 !important;
+        width: 25% !important;
+    }
+    
+    .print-stats .stat-item:last-child {
+        border-right: none !important;
+    }
+    
+    .print-stats .stat-value {
+        font-size: 18pt !important;
+        font-weight: bold !important;
+        color: #000 !important;
+        margin: 0 0 5px 0 !important;
+        display: block !important;
+        line-height: 1.2 !important;
+    }
+    
+    .print-stats .stat-label {
+        font-size: 9pt !important;
+        color: #333 !important;
+        margin: 0 !important;
+        display: block !important;
+        line-height: 1.2 !important;
+    }
+    
+    /* Page breaks */
+    .page-break {
+        page-break-before: always;
+    }
+    
+    .avoid-break {
+        page-break-inside: avoid;
+    }
+    
+    /* Print footer */
+    .print-footer {
+        position: fixed;
+        bottom: 0.5in;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 8pt;
+        border-top: 1px solid #000;
+        padding-top: 5px;
+    }
+    
+    /* Student details styling */
+    .student-info {
+        font-size: 10pt;
+        margin-bottom: 15px;
+    }
+    
+    /* Subject summary table */
+    .summary-table th {
+        background-color: #e0e0e0 !important;
+    }
+    
+    /* Remove table responsive wrapper styling */
+    .table-responsive {
+        overflow: visible !important;
+    }
+    
+    /* Hide cards but keep content */
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        margin-bottom: 15px !important;
+    }
+    
+    .card-body {
+        padding: 0 !important;
+    }
+    
+    /* Ensure proper spacing */
+    h1, h2, h3, h4, h5, h6 {
+        color: #000 !important;
+        margin: 10px 0 5px 0 !important;
+    }
+    
+    /* Print-specific elements visibility */
+    .print-only {
+        display: block !important;
+    }
+    
+    .screen-only {
+        display: none !important;
+    }
+}
+
+/* Print-only elements (hidden on screen) */
+.print-only {
+    display: none;
+}
+
+/* Screen-only elements */
+.screen-only {
+    display: block;
+}
+
+/* Print button styling for screen */
+.print-button {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.print-button:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}

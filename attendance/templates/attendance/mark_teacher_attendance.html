@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% if is_teacher_self_marking %}
+My Attendance
+{% else %}
+Teacher Attendance Management
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .attendance-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: none;
+        margin-bottom: 20px;
+    }
+    
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .status-approved {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #b8d4da;
+    }
+    
+    .status-rejected {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .teacher-self-form {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .approval-btn {
+        border-radius: 20px;
+        padding: 8px 20px;
+        margin: 2px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <!-- Teacher Self-Marking Section -->
+    {% if is_teacher_self_marking %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="header-section text-center mb-4">
+                <h2><i class="fas fa-clock"></i> Mark Your Attendance</h2>
+                <p class="mb-0">Hello {{ current_teacher.full_name }}, please mark your attendance for today.</p>
+            </div>
+            
+            <div class="teacher-self-form">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Date:</strong></label>
+                            <input type="date" name="attendance_date" class="form-control" 
+                                   value="{{ selected_date_str }}" max="{{ 'now'|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"><strong>Status:</strong></label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_present" 
+                                           id="present" value="true" 
+                                           {% if existing_attendance.is_present %}checked{% endif %}
+                                           {% if not can_modify %}disabled{% endif %} required>
+                                    <label class="form-check-label text-success" for="present">
+                                        <i class="fas fa-check-circle"></i> Present
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_present" 
+                                           id="absent" value="false"
+                                           {% if existing_attendance and not existing_attendance.is_present %}checked{% endif %}
+                                           {% if not can_modify %}disabled{% endif %} required>
+                                    <label class="form-check-label text-danger" for="absent">
+                                        <i class="fas fa-times-circle"></i> Absent
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Notes (Optional):</strong></label>
+                        <textarea name="notes" class="form-control" rows="3" 
+                                  placeholder="Any notes about your attendance..."
+                                  {% if not can_modify %}disabled{% endif %}>{{ existing_attendance.notes|default:'' }}</textarea>
+                    </div>
+                    
+                    {% if existing_attendance %}
+                    <div class="alert alert-info mb-4">
+                        <strong>Current Status:</strong> 
+                        <span class="status-badge status-{{ existing_attendance.status }}">
+                            {{ existing_attendance.get_status_display }}
+                        </span>
+                        {% if existing_attendance.status == 'approved' %}
+                        <p class="mb-0 mt-2">Your attendance has been approved by admin.</p>
+                        {% elif existing_attendance.status == 'rejected' %}
+                        <p class="mb-0 mt-2">Your attendance was rejected. You can resubmit.</p>
+                        {% if existing_attendance.admin_notes %}
+                        <p class="mb-0"><strong>Admin Notes:</strong> {{ existing_attendance.admin_notes }}</p>
+                        {% endif %}
+                        {% elif existing_attendance.status == 'pending' %}
+                        <p class="mb-0 mt-2">Your attendance is pending admin approval.</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center">
+                        {% if can_modify %}
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> 
+                            {% if existing_attendance %}Update Attendance{% else %}Submit Attendance{% endif %}
+                        </button>
+                        {% else %}
+                        <p class="text-muted">Attendance has been approved and cannot be modified.</p>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Admin Approval Section -->
+    {% elif is_admin_approval_view %}
+    <div class="header-section text-center mb-4">
+        <h2><i class="fas fa-user-check"></i> Teacher Attendance Approvals</h2>
+        <p class="mb-0">Review and approve teacher attendance submissions</p>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card attendance-card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h4 class="text-warning">{{ pending_count }}</h4>
+                                <p class="text-muted">Pending Approvals</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h4 class="text-info">{{ total_records }}</h4>
+                                <p class="text-muted">Total Records</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <form method="get" class="d-inline">
+                                <select name="status" class="form-select" onchange="this.form.submit()">
+                                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                                </select>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        {% for teacher_id, data in teacher_attendance_data.items %}
+        <div class="col-lg-6 mb-4">
+            <div class="card attendance-card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ data.teacher.full_name }}</h5>
+                    <small class="text-muted">{{ data.teacher.department }} - {{ data.teacher.teacher_id }}</small>
+                </div>
+                <div class="card-body">
+                    {% for record in data.records %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <strong>{{ record.date }}</strong><br>
+                                <span class="{% if record.is_present %}text-success{% else %}text-danger{% endif %}">
+                                    <i class="fas {% if record.is_present %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                                    {% if record.is_present %}Present{% else %}Absent{% endif %}
+                                </span>
+                                {% if record.notes %}
+                                <br><small class="text-muted">{{ record.notes }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <span class="status-badge status-{{ record.status }}">
+                                    {{ record.get_status_display }}
+                                </span>
+                                {% if record.status == 'pending' %}
+                                <br>
+                                <div class="mt-2">
+                                    <button class="btn btn-success btn-sm approval-btn" 
+                                            onclick="approveAttendance('{{ record.id }}', 'approve')">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-danger btn-sm approval-btn" 
+                                            onclick="approveAttendance('{{ record.id }}', 'reject')">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Records Found</h4>
+                <p class="text-muted">No teacher attendance records match your current filter.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+</div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="approvalForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Attendance Decision</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="attendanceId" name="attendance_id">
+                    <input type="hidden" id="actionType" name="action">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Admin Notes:</label>
+                        <textarea name="admin_notes" class="form-control" rows="3" 
+                                  placeholder="Optional notes for the teacher..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function approveAttendance(attendanceId, action) {
+    document.getElementById('attendanceId').value = attendanceId;
+    document.getElementById('actionType').value = action;
+    
+    const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+    const submitBtn = document.getElementById('modalSubmitBtn');
+    
+    if (action === 'approve') {
+        submitBtn.textContent = 'Approve';
+        submitBtn.className = 'btn btn-success';
+    } else {
+        submitBtn.textContent = 'Reject';
+        submitBtn.className = 'btn btn-danger';
+    }
+    
+    modal.show();
+}
+
+document.getElementById('approvalForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "attendance:approve-teacher-attendance" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while processing the request.');
+    });
+    
+    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>K-Means Clustering - Student Performance Analysis</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .kmeans-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .kmeans-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .kmeans-header h2 {
+            margin: 10px 0 0 0;
+            font-size: 1.3em;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .kmeans-card {
+            margin: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+            display: inline-block;
+            margin: 10px 0;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-analyze:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .high-performers { color: #4CAF50; }
+        .medium-performers { color: #FF9800; }
+        .low-performers { color: #F44336; }
+
+        .student-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .student-table th {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .student-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .student-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .student-table tr:hover {
+            background: #e8f5e8;
+        }
+
+        .cluster-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cluster-high {
+            background: #e8f5e8;
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+
+        .cluster-medium {
+            background: #fff3e0;
+            color: #FF9800;
+            border: 1px solid #FF9800;
+        }
+
+        .cluster-low {
+            background: #ffebee;
+            color: #F44336;
+            border: 1px solid #F44336;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 20px;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="kmeans-header">
+            <h1>🎯 K-Means Clustering Algorithm</h1>
+            <h2>Student Performance Analysis</h2>
+        </div>
+
+        <a href="{% url 'students:list' %}" class="back-btn">← Back to Students</a>
+
+        {% if not show_results %}
+        <div class="kmeans-card">
+            <h3>📊 Start Performance Clustering</h3>
+            
+            <form method="POST" id="clusteringForm">
+                {% csrf_token %}
+                <button type="submit" class="btn-analyze" id="analyzeBtn">
+                    <span id="btnText">🎯 Analyze Students with K-Means</span>
+                    <span id="btnLoading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        Analyzing... Please wait
+                    </span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if show_results and analysis_result.success %}
+        <div class="kmeans-card">
+            <h3>📊 Clustering Results</h3>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{ analysis_result.summary.total_students }}</div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number high-performers">{{ analysis_result.summary.high_performers_count }}</div>
+                    <div class="stat-label">High Performers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number medium-performers">{{ analysis_result.summary.medium_performers_count }}</div>
+                    <div class="stat-label">Medium Performers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number low-performers">{{ analysis_result.summary.low_performers_count }}</div>
+                    <div class="stat-label">Low Performers</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="kmeans-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>👥 Individual Student Clusters</h3>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label for="semesterFilter" style="font-weight: bold;">Filter by Semester:</label>
+                        <select id="semesterFilter" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                            <option value="all">All Semesters</option>
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                            <option value="3">3rd Semester</option>
+                            <option value="4">4th Semester</option>
+                            <option value="5">5th Semester</option>
+                            <option value="6">6th Semester</option>
+                            <option value="7">7th Semester</option>
+                            <option value="8">8th Semester</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label for="clusterFilter" style="font-weight: bold;">Filter by Cluster:</label>
+                        <select id="clusterFilter" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                            <option value="all">All Clusters</option>
+                            <option value="0">High Performers</option>
+                            <option value="1">Medium Performers</option>
+                            <option value="2">Low Performers</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="student-table" id="studentTable">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Program</th>
+                            <th>Attendance %</th>
+                            <th>Avg Marks</th>
+                            <th>Assignment Rate %</th>
+                            <th>Cluster</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in analysis_result.students_data %}
+                        <tr class="student-row" data-cluster="{{ student.cluster_label }}" data-semester="{{ student.semester }}">
+                            <td>
+                                <strong>{{ student.student_name }}</strong><br>
+                                <small>{{ student.program }} - Sem {{ student.semester }}</small>
+                            </td>
+                            <td>{{ student.program }}</td>
+                            <td>
+                                {% if student.attendance_percentage >= 75 %}
+                                    <span style="color: #4CAF50; font-weight: bold;">{{ student.attendance_percentage }}%</span>
+                                {% elif student.attendance_percentage >= 60 %}
+                                    <span style="color: #FF9800; font-weight: bold;">{{ student.attendance_percentage }}%</span>
+                                {% else %}
+                                    <span style="color: #F44336; font-weight: bold;">{{ student.attendance_percentage }}%</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ student.avg_marks|floatformat:1 }}%</td>
+                            <td>{{ student.assignment_completion_rate|floatformat:1 }}%</td>
+                            <td>
+                                {% if student.cluster_name == 'High Performers' %}
+                                    <span class="cluster-badge cluster-high">{{ student.cluster_name }}</span>
+                                {% elif student.cluster_name == 'Medium Performers' %}
+                                    <span class="cluster-badge cluster-medium">{{ student.cluster_name }}</span>
+                                {% else %}
+                                    <span class="cluster-badge cluster-low">{{ student.cluster_name }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const semesterFilter = document.getElementById('semesterFilter');
+            const clusterFilter = document.getElementById('clusterFilter');
+            
+            function applyFilters() {
+                const selectedSemester = semesterFilter.value;
+                const selectedCluster = clusterFilter.value;
+                const studentRows = document.querySelectorAll('.student-row');
+                
+                studentRows.forEach(function(row) {
+                    const studentSemester = row.getAttribute('data-semester');
+                    const studentCluster = row.getAttribute('data-cluster');
+                    
+                    const semesterMatch = selectedSemester === 'all' || studentSemester === selectedSemester;
+                    const clusterMatch = selectedCluster === 'all' || studentCluster === selectedCluster;
+                    
+                    if (semesterMatch && clusterMatch) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Count visible rows
+                const visibleRows = Array.from(document.querySelectorAll('.student-row')).filter(row => 
+                    row.style.display !== 'none'
+                );
+                
+                // Update heading
+                const heading = document.querySelector('h3');
+                if (heading && heading.textContent.includes('Individual Student Clusters')) {
+                    const semesterText = selectedSemester === 'all' ? 'All Semesters' : `Semester ${selectedSemester}`;
+                    const clusterText = selectedCluster === 'all' ? 'All Clusters' : 
+                                      selectedCluster === '0' ? 'High Performers' :
+                                      selectedCluster === '1' ? 'Medium Performers' : 'Low Performers';
+                    
+                    let filterText = '';
+                    if (selectedSemester !== 'all' && selectedCluster !== 'all') {
+                        filterText = `${semesterText} - ${clusterText}`;
+                    } else if (selectedSemester !== 'all') {
+                        filterText = semesterText;
+                    } else if (selectedCluster !== 'all') {
+                        filterText = clusterText;
+                    } else {
+                        filterText = 'All Students';
+                    }
+                    
+                    heading.innerHTML = `👥 Individual Student Clusters - ${filterText} (${visibleRows.length})`;
+                }
+            }
+            
+            if (semesterFilter) {
+                semesterFilter.addEventListener('change', applyFilters);
+            }
+            
+            if (clusterFilter) {
+                clusterFilter.addEventListener('change', applyFilters);
+            }
+        });
+
+        document.getElementById('analyzeBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            document.getElementById('btnText').style.display = 'none';
+            document.getElementById('btnLoading').style.display = 'inline-block';
+            this.disabled = true;
+            
+            setTimeout(() => {
+                document.getElementById('clusteringForm').submit();
+            }, 300);
+        });
+    </script>
+</body>
+</html>

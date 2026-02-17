@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Assignment - {{ subject.subject_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assignment-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+    
+    .assignment-header {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: none;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        margin-bottom: 30px;
+    }
+    
+    .form-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: none;
+        background: white;
+    }
+    
+    .form-section {
+        border-left: 4px solid #28a745;
+        padding-left: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .form-section h5 {
+        color: #28a745;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 15px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .form-control.form-control-lg {
+        padding: 15px 20px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .form-control-sm {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .datetime-inputs {
+        display: flex;
+        gap: 15px;
+        align-items: end;
+    }
+    
+    .datetime-inputs .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
+    
+    .btn-create {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 15px 30px;
+        font-weight: 600;
+        color: white;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-create:hover {
+        background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-secondary {
+        border-radius: 10px;
+        padding: 15px 30px;
+        font-weight: 600;
+        font-size: 16px;
+    }
+    
+    .file-upload-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 20px;
+        border: 2px dashed #28a745;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .file-upload-section:hover {
+        background: #e9f7ef;
+        border-color: #20c997;
+    }
+    
+    .upload-icon {
+        font-size: 2rem;
+        color: #28a745;
+        margin-bottom: 10px;
+    }
+    
+    .assignment-preview {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 30px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .preview-badge {
+        background: #28a745;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        display: inline-block;
+    }
+    
+    .marks-input {
+        background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+        border: none;
+        font-weight: 600;
+        text-align: center;
+        font-size: 18px;
+    }
+    
+    .marks-input:focus {
+        background: linear-gradient(135deg, #fdcb6e 0%, #ffeaa7 100%);
+        box-shadow: 0 0 0 0.2rem rgba(253, 203, 110, 0.25);
+    }
+    
+    .due-date-warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 10px;
+        display: none;
+    }
+    
+    .required-asterisk {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    @media (max-width: 768px) {
+        .datetime-inputs {
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .assignment-container {
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="assignment-container">
+    <!-- Header Card -->
+    <div class="card assignment-header">
+        <div class="card-body text-center">
+            <h2 class="mb-3">
+                <i class="fas fa-tasks me-2"></i>
+                Create New Assignment
+            </h2>
+            <h4 class="mb-1">{{ subject.subject_name }}</h4>
+            <p class="mb-0">Subject Code: {{ subject.subject_code }} | Semester: {{ subject.semester }}</p>
+        </div>
+    </div>
+
+    {% if subject %}
+    <!-- Assignment Form -->
+    <div class="card form-card">
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data" id="assignmentForm">
+                {% csrf_token %}
+
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+
+                    <!-- Assignment Title -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-heading me-2"></i>Assignment Title <span class="required-asterisk">*</span></label>
+                        <input type="text" name="title" class="form-control form-control-lg" placeholder="Enter assignment title (e.g., Chapter 1 Exercise, Mid-term Project)" required>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-align-left me-2"></i>Description <span class="required-asterisk">*</span></label>
+                        <textarea name="description" class="form-control" rows="4" placeholder="Provide a clear description of what students need to do..." required></textarea>
+                        <small class="text-muted">Be specific about what you expect from students</small>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-list-ol me-2"></i>Detailed Instructions</label>
+                        <textarea name="instructions" class="form-control" rows="6" placeholder="Step-by-step instructions for completing the assignment...
+
+Example:
+1. Research the topic thoroughly
+2. Create an outline
+3. Write a 1000-word report
+4. Include references and citations
+5. Submit in PDF format"></textarea>
+                        <small class="text-muted">Provide step-by-step guidance to help students succeed</small>
+                    </div>
+                </div>
+
+                <!-- Assignment Details Section -->
+                <div class="form-section">
+                    <h5><i class="fas fa-cogs me-2"></i>Assignment Details</h5>
+
+                    <!-- Due Date and Time -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-calendar-alt me-2"></i>Due Date & Time <span class="required-asterisk">*</span></label>
+                        <div class="datetime-inputs">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" name="due_date" class="form-control" required id="dueDateInput">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Time</label>
+                                <input type="time" name="due_time" class="form-control" value="23:59" required>
+                            </div>
+                        </div>
+                        <div class="due-date-warning" id="dueDateWarning">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            <strong>Note:</strong> Make sure to give students enough time to complete the assignment.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optional Assignment File Section -->
+                <div class="form-section">
+                    <h5><i class="fas fa-paperclip me-2"></i>Assignment Resources (Optional)</h5>
+
+                    <div class="file-upload-section">
+                        <div class="upload-icon">
+                            <i class="fas fa-file-upload"></i>
+                        </div>
+                        <h6>Upload Assignment File</h6>
+                        <p class="text-muted mb-3">
+                            Attach any additional resources, templates, or reference materials for this assignment
+                        </p>
+                        <input type="file" name="assignment_file" id="assignmentFile" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" style="display: none;">
+                        <button type="button" class="btn btn-outline-success" onclick="document.getElementById('assignmentFile').click()">
+                            <i class="fas fa-folder-open me-2"></i>Choose File
+                        </button>
+                        <div id="fileInfo" class="mt-3" style="display: none;">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span id="selectedFileName"></span>
+                        </div>
+                    </div>
+                    <small class="text-muted">Supported formats: PDF, DOC, TXT, Images (Max: 25MB)</small>
+                </div>
+
+                <!-- Assignment Preview -->
+                <div class="assignment-preview">
+                    <div class="preview-badge">Preview</div>
+                    <h6 id="previewTitle">Assignment Title Will Appear Here</h6>
+                    <p class="text-muted mb-2" id="previewSubject">{{ subject.subject_name }} ({{ subject.subject_code }})</p>
+                    <p id="previewDescription">Assignment description will appear here...</p>
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <strong>Due Date:</strong>
+                            <div id="previewDueDate" class="text-muted">Select due date</div>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Status:</strong>
+                            <div class="text-info">Draft</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-3 justify-content-end mt-4">
+                    <a href="{% url 'courses:subject-detail' subject.subject_code %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-create" id="createBtn">
+                        <i class="fas fa-plus me-2"></i>Create Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Error State -->
+    <div class="alert alert-danger text-center">
+        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+        <h4>Subject Not Found</h4>
+        <p>The requested subject could not be found. Please check the URL and try again.</p>
+        <a href="{% url 'courses:teacher-dashboard' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const titleInput = document.querySelector('input[name="title"]');
+    const descriptionInput = document.querySelector('textarea[name="description"]');
+    const dueDateInput = document.querySelector('input[name="due_date"]');
+    const dueTimeInput = document.querySelector('input[name="due_time"]');
+    const assignmentFile = document.getElementById('assignmentFile');
+    const fileInfo = document.getElementById('fileInfo');
+    const selectedFileName = document.getElementById('selectedFileName');
+
+    // Preview elements
+    const previewTitle = document.getElementById('previewTitle');
+    const previewDescription = document.getElementById('previewDescription');
+    const previewDueDate = document.getElementById('previewDueDate');
+
+    // Set minimum due date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dueDateInput.min = tomorrow.toISOString().split('T')[0];
+
+    // Real-time preview updates
+    titleInput.addEventListener('input', function () {
+        previewTitle.textContent = this.value || 'Assignment Title Will Appear Here';
+    });
+
+    descriptionInput.addEventListener('input', function () {
+        previewDescription.textContent = this.value || 'Assignment description will appear here...';
+    });
+
+    dueDateInput.addEventListener('input', function () {
+        previewDueDate.textContent = this.value || 'Select due date';
+    });
+
+
+    assignmentFile.addEventListener('change', function () {
+        if (assignmentFile.files.length > 0) {
+            selectedFileName.textContent = assignmentFile.files[0].name;
+            fileInfo.style.display = 'block';
+        } else {
+            fileInfo.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,338 @@
+<!-- Create: templates/courses/teacher_create.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add New Teacher - Student Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chalkboard-teacher"></i> 
+                        Add New Teacher
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Display any messages/errors -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="POST" enctype="multipart/form-data" id="teacherForm">
+                        {% csrf_token %}
+                        
+                        <!-- Personal Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-user"></i> Personal Information
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="phone_number" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                                       placeholder="+977-9800000000">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="gender" class="form-label">Gender</label>
+                                <select class="form-select" id="gender" name="gender">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="address" class="form-label">Address</label>
+                                <textarea class="form-control" id="address" name="address" rows="3" 
+                                          placeholder="Full Address"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Professional Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-briefcase"></i> Professional Information
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="teacher_id" class="form-label">Teacher ID *</label>
+                                <input type="text" class="form-control" id="teacher_id" name="teacher_id" required 
+                                       placeholder="e.g., TCH001">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="department" class="form-label">Department *</label>
+                                <select class="form-select" id="department" name="department" required>
+                                    <option value="">Select Department</option>
+                                    {% for dept in departments %}
+                                        <option value="{{ dept }}">{{ dept }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="designation" class="form-label">Designation *</label>
+                                <select class="form-select" id="designation" name="designation" required>
+                                    <option value="">Select Designation</option>
+                                    {% for desig in designations %}
+                                        <option value="{{ desig }}">{{ desig }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="qualification" class="form-label">Highest Qualification</label>
+                                <input type="text" class="form-control" id="qualification" name="qualification" 
+                                       placeholder="e.g., Master's in Computer Science">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="experience_years" class="form-label">Years of Experience</label>
+                                <input type="number" class="form-control" id="experience_years" name="experience_years" 
+                                       min="0" max="50" value="0">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="joining_date" class="form-label">Joining Date</label>
+                                <input type="date" class="form-control" id="joining_date" name="joining_date">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="employment_type" class="form-label">Employment Type</label>
+                                <select class="form-select" id="employment_type" name="employment_type">
+                                    {% for value, label in employment_types %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="salary" class="form-label">Salary (Optional)</label>
+                                <input type="number" class="form-control" id="salary" name="salary" 
+                                       placeholder="Monthly salary in NPR" step="0.01">
+                            </div>
+                        </div>
+
+                        <!-- Emergency Contact Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-phone-alt"></i> Emergency Contact
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="emergency_contact_name" class="form-label">Contact Name</label>
+                                <input type="text" class="form-control" id="emergency_contact_name" 
+                                       name="emergency_contact_name">
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="emergency_contact_phone" class="form-label">Contact Phone</label>
+                                <input type="tel" class="form-control" id="emergency_contact_phone" 
+                                       name="emergency_contact_phone">
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="emergency_contact_relation" class="form-label">Relation</label>
+                                <select class="form-select" id="emergency_contact_relation" name="emergency_contact_relation">
+                                    <option value="">Select Relation</option>
+                                    <option value="Spouse">Spouse</option>
+                                    <option value="Parent">Parent</option>
+                                    <option value="Sibling">Sibling</option>
+                                    <option value="Child">Child</option>
+                                    <option value="Friend">Friend</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Subject Assignment Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-book"></i> Subject Assignment (Optional)
+                                </h5>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <input type="text" class="form-control" id="subjectSearch" 
+                                       placeholder="Search subjects..." onkeyup="filterSubjects()">
+                            </div>
+
+                            <div class="row" id="subjectList">
+                                {% regroup all_subjects by semester as subjects_by_semester %}
+                                {% for semester in subjects_by_semester %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-header py-2">
+                                                <h6 class="mb-0">Semester {{ semester.grouper }}</h6>
+                                            </div>
+                                            <div class="card-body py-2">
+                                                {% for subject in semester.list %}
+                                                    <div class="form-check subject-item" 
+                                                         data-subject-name="{{ subject.subject_name|lower }}">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="subject_{{ subject.subject_code }}"
+                                                               name="subjects_teaching" 
+                                                               value="{{ subject.subject_code }}">
+                                                        <label class="form-check-label" for="subject_{{ subject.subject_code }}">
+                                                            <small>
+                                                                <strong>{{ subject.subject_code }}</strong><br>
+                                                                {{ subject.subject_name }}
+                                                            </small>
+                                                        </label>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-info-circle"></i> Additional Information
+                                </h5>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                          placeholder="Any additional notes about the teacher"></textarea>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="create_account" 
+                                           name="create_account" checked>
+                                    <label class="form-check-label" for="create_account">
+                                        <strong>Create Login Account</strong>
+                                        <small class="text-muted d-block">
+                                            Creates user account for teacher dashboard access
+                                        </small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{% url 'courses:teacher-list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Create Teacher
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Subject search functionality
+function filterSubjects() {
+    const searchTerm = document.getElementById('subjectSearch').value.toLowerCase();
+    const subjectItems = document.querySelectorAll('.subject-item');
+    
+    subjectItems.forEach(item => {
+        const subjectName = item.getAttribute('data-subject-name');
+        if (subjectName.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Form validation
+document.getElementById('teacherForm').addEventListener('submit', function(e) {
+    const requiredFields = ['first_name', 'last_name', 'email', 'teacher_id', 'department', 'designation'];
+    let valid = true;
+    
+    requiredFields.forEach(field => {
+        const input = document.getElementById(field);
+        if (!input.value.trim()) {
+            input.classList.add('is-invalid');
+            valid = false;
+        } else {
+            input.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!valid) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+    }
+});
+
+// Auto-generate teacher ID suggestion
+document.getElementById('first_name').addEventListener('blur', generateTeacherID);
+document.getElementById('last_name').addEventListener('blur', generateTeacherID);
+
+function generateTeacherID() {
+    const firstName = document.getElementById('first_name').value.trim();
+    const lastName = document.getElementById('last_name').value.trim();
+    const teacherIdField = document.getElementById('teacher_id');
+    
+    if (firstName && lastName && !teacherIdField.value) {
+        const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        const timestamp = Date.now().toString().slice(-3);
+        teacherIdField.value = `TCH${initials}${timestamp}`;
+    }
+}
+
+// Set default joining date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const joiningDate = document.getElementById('joining_date');
+    if (!joiningDate.value) {
+        const today = new Date().toISOString().split('T')[0];
+        joiningDate.value = today;
+    }
+});
+</script>
+{% endblock %}

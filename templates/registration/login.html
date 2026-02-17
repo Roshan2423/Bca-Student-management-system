@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Student Management System</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #dee2e6;
+            overflow: hidden;
+            max-width: 400px;
+        }
+        
+        .login-header {
+            background: #2c2c2c;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .login-header h2 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        
+        .login-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .login-body {
+            padding: 2rem;
+        }
+        
+        .form-floating {
+            margin-bottom: 1.25rem;
+        }
+        
+        .form-floating > .form-control {
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            padding: 1rem;
+            font-size: 1rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        .form-floating > .form-control:focus {
+            border-color: #FEB510;
+            box-shadow: 0 0 0 0.2rem rgba(254, 181, 16, 0.25);
+        }
+        
+        .form-floating > label {
+            padding: 1rem;
+            color: #6c757d;
+        }
+        
+        .btn-login {
+            background: #FEB510;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 4px 12px rgba(254, 181, 16, 0.3);
+        }
+        
+        .btn-login:hover {
+            background: #ff8c00;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(254, 181, 16, 0.4);
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 1.25rem;
+        }
+        
+        .footer-info {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+        }
+        
+        .footer-info small {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        .password-container {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            z-index: 5;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .password-toggle:hover {
+            color: #FEB510;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-8 col-md-6 col-lg-5 col-xl-4">
+                <div class="login-container">
+                    <!-- Header -->
+                    <div class="login-header">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="width: 50px; height: 50px; background: #FEB510; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <span style="font-size: 1.8rem; font-weight: 900; background: linear-gradient(135deg, #FEB510 0%, #ff8c00 50%, #ffffff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: 'Arial Black', 'Helvetica', sans-serif; letter-spacing: 1px; text-transform: uppercase;">Jupiter Edu</span>
+                        </div>
+                        <h2 style="margin-bottom: 0.5rem; font-weight: 600; font-size: 1.3rem;">Student Management System</h2>
+                        <p>Welcome back! Please sign in to continue.</p>
+                    </div>
+                    
+                    <!-- Login Form -->
+                    <div class="login-body">
+                        <!-- Display Messages -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        {% if messages %}
+    {% for message in messages %}
+        {% if 'successfully logged out' not in message|stringformat:"s" %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+                        
+                        <form method="POST" id="loginForm">
+                            {% csrf_token %}
+                            
+                            <!-- Email Field -->
+                            <div class="form-floating">
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="id_username" 
+                                       name="username" 
+                                       placeholder="Email Address"
+                                       required 
+                                       autofocus
+                                       value="{{ form.username.value|default:'' }}">
+                                <label for="id_username">Email Address</label>
+                                <i class="fas fa-envelope input-icon"></i>
+                            </div>
+                            
+                            <!-- Password Field -->
+                            <div class="form-floating password-container">
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="id_password" 
+                                       name="password" 
+                                       placeholder="Password"
+                                       required>
+                                <label for="id_password">Password</label>
+                                <button type="button" class="password-toggle" onclick="togglePassword()">
+                                    <i class="fas fa-eye" id="passwordIcon"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Login Button -->
+                            <button type="submit" class="btn btn-primary btn-login" id="loginBtn">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                <span>Sign In</span>
+                                <div class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
+                            </button>
+                        </form>
+                        
+                        <!-- Footer Info -->
+                        <div class="footer-info">
+                            <small>Forgot your password? Contact your administrator.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bottom Text -->
+                <div class="bottom-text" style="text-align: center; margin-top: 20px; color: #64748b;">
+                    <small>
+                        <i class="fas fa-lock me-1" style="color: #FEB510;"></i>
+                        All accounts are managed by system administrators
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Password visibility toggle
+        function togglePassword() {
+            const passwordField = document.getElementById('id_password');
+            const passwordIcon = document.getElementById('passwordIcon');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                passwordIcon.classList.remove('fa-eye');
+                passwordIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                passwordIcon.classList.remove('fa-eye-slash');
+                passwordIcon.classList.add('fa-eye');
+            }
+        }
+        
+        // Form submission handling
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('loginBtn');
+            const spinner = submitBtn.querySelector('.spinner-border');
+            const text = submitBtn.querySelector('span');
+            
+            // Show loading state
+            spinner.classList.remove('d-none');
+            text.textContent = 'Signing In...';
+            submitBtn.disabled = true;
+        });
+        
+        // Auto-focus email field
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('id_username').focus();
+        });
+    </script>
+</body>
+</html>

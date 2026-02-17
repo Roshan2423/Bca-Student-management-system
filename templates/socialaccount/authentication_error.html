@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Debug - Student Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h4>🔍 Google OAuth Debug - Detailed Analysis</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <h5><strong>Google Login Failed</strong></h5>
+                            <p>OAuth callback received but user login failed. Let's debug this...</p>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Basic Info:</h6>
+                                <ul class="list-group mb-3">
+                                    <li class="list-group-item">
+                                        <strong>Provider:</strong> {{ provider.name|default:"Google" }}
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Error Type:</strong> {{ exception|default:"Unknown error" }}
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Your Status:</strong> 
+                                        {% if user.is_authenticated %}
+                                            ✅ Logged in as {{ user.email }}
+                                        {% else %}
+                                            ❌ Not logged in
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Technical Details:</h6>
+                                <ul class="list-group mb-3">
+                                    <li class="list-group-item">
+                                        <strong>Request Method:</strong> {{ request.method }}
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Callback Path:</strong> {{ request.path }}
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Session Key:</strong> {{ request.session.session_key|default:"No session" }}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Show GET parameters for debugging -->
+                        {% if request.GET %}
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6>OAuth Callback Parameters:</h6>
+                            </div>
+                            <div class="card-body">
+                                <small class="text-muted">
+                                    {% for key, value in request.GET.items %}
+                                        <strong>{{ key }}:</strong> 
+                                        {% if key == 'code' %}
+                                            {{ value|truncatechars:20 }}... (truncated)
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+                                        <br>
+                                    {% endfor %}
+                                </small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="alert alert-info">
+                            <h6>🔍 Diagnosis:</h6>
+                            <p>Since OAuth callback is receiving status 200 but user isn't logged in, the issue is likely:</p>
+                            <ul>
+                                <li><strong>Email Conflict:</strong> Google email might match existing manual account</li>
+                                <li><strong>User Creation Failed:</strong> Error during social account creation</li>
+                                <li><strong>Role Assignment:</strong> User created but role not assigned</li>
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-success">
+                            <h6>✅ What's Working:</h6>
+                            <ul class="mb-0">
+                                <li>Google OAuth redirect ✅</li>
+                                <li>Authorization code received ✅</li>
+                                <li>Callback URL correct ✅</li>
+                                <li>Django processing callback ✅</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6>🚀 Try These Solutions:</h6>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                                <a href="/accounts/login/" class="btn btn-primary">Manual Login</a>
+                                <a href="/" class="btn btn-secondary">Go Home</a>
+                                <button class="btn btn-info" onclick="window.location.reload()">Try Again</button>
+                            </div>
+                        </div>
+
+                        <!-- Debug: Show if any errors in context -->
+                        {% if messages %}
+                        <div class="mt-3">
+                            <h6>Messages:</h6>
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

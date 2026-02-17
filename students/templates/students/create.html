@@ -1,0 +1,279 @@
+<!-- Enhanced: templates/students/create.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if student %}Edit Student{% else %}Add Student{% endif %} - Student Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus"></i> 
+                        {% if student %}Edit Student{% else %}Add New Student{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Display any messages/errors -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="POST" enctype="multipart/form-data" id="studentForm">
+                        {% csrf_token %}
+                        
+                        <!-- Personal Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-user"></i> Personal Information
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" 
+                                       value="{{ student.first_name|default:'' }}" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                       value="{{ student.last_name|default:'' }}" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ student.email|default:'' }}" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="phone_number" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                                       value="{{ student.phone_number|default:'' }}" placeholder="+977-9800000000">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" 
+                                       value="{{ student.date_of_birth|date:'Y-m-d'|default:'' }}">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="gender" class="form-label">Gender</label>
+                                <select class="form-select" id="gender" name="gender">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male" {% if student.gender == 'Male' %}selected{% endif %}>Male</option>
+                                    <option value="Female" {% if student.gender == 'Female' %}selected{% endif %}>Female</option>
+                                    <option value="Other" {% if student.gender == 'Other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Academic Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-graduation-cap"></i> Academic Information
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="student_id" class="form-label">Student ID *</label>
+                                <input type="text" class="form-control" id="student_id" name="student_id" 
+                                       value="{{ student.student_id|default:'' }}" required 
+                                       placeholder="e.g., 2024-BCA-001">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="program" class="form-label">Program *</label>
+                                <select class="form-select" id="program" name="program" required>
+                                    <option value="">Select Program</option>
+                                    <option value="BCA" {% if student.program == 'BCA' %}selected{% endif %}>Bachelor of Computer Applications (BCA)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="current_semester" class="form-label">Current Semester *</label>
+                                <select class="form-select" id="current_semester" name="current_semester" required>
+                                    <option value="">Select Semester</option>
+                                    {% for i in "12345678" %}
+                                    <option value="{{ i }}" {% if student.current_semester == i|add:0 %}selected{% endif %}>
+                                        {{ i }} Semester
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="admission_date" class="form-label">Admission Date *</label>
+                                <input type="date" class="form-control" id="admission_date" name="admission_date" 
+                                       value="{{ student.admission_date|date:'Y-m-d'|default:'' }}" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="batch" class="form-label">Batch</label>
+                                <input type="text" class="form-control" id="batch" name="batch" 
+                                       value="{{ student.batch|default:'' }}" placeholder="e.g., 2024-2027">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="roll_number" class="form-label">Roll Number</label>
+                                <input type="text" class="form-control" id="roll_number" name="roll_number" 
+                                       value="{{ student.roll_number|default:'' }}" placeholder="e.g., 001">
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-map-marker-alt"></i> Contact Information
+                                </h5>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="address" class="form-label">Address</label>
+                                <textarea class="form-control" id="address" name="address" rows="3" 
+                                          placeholder="Full Address">{{ student.address|default:'' }}</textarea>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="emergency_contact_name" class="form-label">Emergency Contact Name</label>
+                                <input type="text" class="form-control" id="emergency_contact_name" 
+                                       name="emergency_contact_name" value="{{ student.emergency_contact_name|default:'' }}">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="emergency_contact_phone" class="form-label">Emergency Contact Phone</label>
+                                <input type="tel" class="form-control" id="emergency_contact_phone" 
+                                       name="emergency_contact_phone" value="{{ student.emergency_contact_phone|default:'' }}">
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-info-circle"></i> Additional Information
+                                </h5>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                          placeholder="Any additional notes about the student">{{ student.notes|default:'' }}</textarea>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                           {% if student.is_active or not student %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_active">
+                                        Active Student
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            {% if not student %}
+                            <!-- Account Creation Option (Only for new students) -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="create_account" name="create_account" checked>
+                                    <label class="form-check-label" for="create_account">
+                                        <strong>Create Login Account</strong>
+                                        <br><small class="text-muted">Generate password and create system access</small>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{% url 'students:list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> 
+                                        {% if student %}Update Student{% else %}Add Student{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('studentForm').addEventListener('submit', function(e) {
+    // Basic form validation
+    const requiredFields = ['first_name', 'last_name', 'email', 'student_id', 'program', 'current_semester', 'admission_date'];
+    let valid = true;
+    
+    requiredFields.forEach(field => {
+        const input = document.getElementById(field);
+        if (!input.value.trim()) {
+            input.classList.add('is-invalid');
+            valid = false;
+        } else {
+            input.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!valid) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+    }
+});
+
+// Auto-generate student ID based on program and year
+document.getElementById('program').addEventListener('change', function() {
+    const program = this.value;
+    const year = new Date().getFullYear();
+    const studentIdField = document.getElementById('student_id');
+    
+    if (program && !studentIdField.value) {
+        // Simple auto-generation (you can make this more sophisticated)
+        const timestamp = Date.now().toString().slice(-3);
+        studentIdField.value = `${year}-${program}-${timestamp}`;
+    }
+});
+
+// Show/hide account creation info based on checkbox
+document.getElementById('create_account')?.addEventListener('change', function() {
+    const accountInfo = document.getElementById('accountInfo');
+    if (this.checked) {
+        if (!accountInfo) {
+            const info = document.createElement('div');
+            info.id = 'accountInfo';
+            info.className = 'alert alert-info mt-2';
+            info.innerHTML = '<i class="fas fa-info-circle"></i> A random password will be generated and displayed after student creation.';
+            this.closest('.form-check').appendChild(info);
+        }
+    } else {
+        if (accountInfo) {
+            accountInfo.remove();
+        }
+    }
+});
+
+// Trigger initial account info display
+if (document.getElementById('create_account')?.checked) {
+    document.getElementById('create_account').dispatchEvent(new Event('change'));
+}
+</script>
+{% endblock %}

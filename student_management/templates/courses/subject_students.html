@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Students in {{ subject.subject_name }} - Course Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1><i class="fas fa-users"></i> Students in {{ subject.subject_name }}</h1>
+                    <p class="text-muted mb-0">
+                        {{ subject.subject_code }} | Semester {{ subject.semester }} | {{ total_students }} Total Students
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'courses:teacher-dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <a href="{% url 'courses:subject-detail' subject.subject_code %}" class="btn btn-primary">
+                        <i class="fas fa-book"></i> Subject Details
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ total_students }}</h3>
+                                    <p class="mb-0">Total Students</p>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-users fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ active_students }}</h3>
+                                    <p class="mb-0">Active Students</p>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-user-check fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">{{ fully_paid_students }}</h3>
+                                    <p class="mb-0">Fully Paid</p>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-credit-card fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-0">Sem {{ subject.semester }}</h3>
+                                    <p class="mb-0">Current Semester</p>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-8">
+                            <label for="search" class="form-label">Search Students</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="Search by name, email, student ID, or phone number" 
+                                   value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <a href="{% url 'courses:subject-students' subject.subject_code %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Students Table -->
+            {% if subject %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> Students List 
+                        <span class="badge bg-primary ms-2">{{ student_data|length }} 
+                            {% if search_query %}Found{% else %}Total{% endif %}
+                        </span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if student_data %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone Number</th>
+                                        <th>Fee Status</th>
+                                        <th>Assignment Progress</th>
+                                        <th>Status</th>
+                                        {% if can_manage_students %}
+                                        <th>Actions</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in student_data %}
+                                    <tr{% if not data.student.is_active %} class="table-secondary"{% endif %}>
+                                        <td>
+                                            <strong class="text-primary">{{ data.student.student_id }}</strong>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-primary rounded-circle text-white d-flex align-items-center justify-content-center me-2">
+                                                    {{ data.student.first_name|first }}{{ data.student.last_name|first }}
+                                                </div>
+                                                <div>
+                                                    <strong>{{ data.student.first_name }} {{ data.student.last_name }}</strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="mailto:{{ data.student.email }}" class="text-decoration-none">
+                                                {{ data.student.email }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            {% if data.student.phone_number %}
+                                                <a href="tel:{{ data.student.phone_number }}" class="text-decoration-none">
+                                                    {{ data.student.phone_number }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if data.fee_status == "Fully Paid" %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check-circle"></i> {{ data.fee_status }}
+                                                </span>
+                                            {% elif data.fee_status == "Partially Paid" %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-exclamation-triangle"></i> {{ data.fee_status }}
+                                                </span>
+                                                <br><small class="text-muted">{{ data.fee_completion }}%</small>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times-circle"></i> {{ data.fee_status }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="progress mb-1" style="height: 15px;">
+                                                <div class="progress-bar 
+                                                    {% if data.assignment_completion >= 80 %}bg-success
+                                                    {% elif data.assignment_completion >= 60 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                    style="width: {{ data.assignment_completion }}%;">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ data.submitted_assignments }}/{{ data.total_assignments }} 
+                                                ({{ data.assignment_completion }}%)
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% if data.student.is_active %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check-circle"></i> Active
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times-circle"></i> Inactive
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        {% if can_manage_students %}
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'students:detail' data.student.id %}" 
+                                                   class="btn btn-sm btn-outline-info" title="View Student Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="mailto:{{ data.student.email }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="Send Email">
+                                                    <i class="fas fa-envelope"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                        {% endif %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">
+                                    Showing {{ student_data|length }} student{{ student_data|length|pluralize }} 
+                                    {% if search_query %}matching "{{ search_query }}"{% endif %}
+                                </small>
+                                {% if search_query %}
+                                <small class="text-muted">
+                                    <a href="{% url 'courses:subject-students' subject.subject_code %}" class="text-decoration-none">
+                                        View all {{ total_students }} students
+                                    </a>
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">
+                                {% if search_query %}
+                                    No students found matching "{{ search_query }}"
+                                {% else %}
+                                    No students enrolled in this subject
+                                {% endif %}
+                            </h5>
+                            {% if search_query %}
+                                <p class="text-muted">Try adjusting your search term.</p>
+                                <a href="{% url 'courses:subject-students' subject.subject_code %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-times"></i> Clear Search
+                                </a>
+                            {% else %}
+                                <p class="text-muted">Students will appear here when they enroll in Semester {{ subject.semester }}.</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                Subject not found or access denied.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-sm {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.table th {
+    white-space: nowrap;
+}
+
+.btn-group .btn {
+    border-radius: 0.25rem;
+    margin-right: 2px;
+}
+
+.table-secondary {
+    opacity: 0.7;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+</style>
+{% endblock %}

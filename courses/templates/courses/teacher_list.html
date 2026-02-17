@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teachers List - Student Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Teachers Management</h1>
+                    <p class="text-muted">Manage teacher profiles and subject assignments</p>
+                </div>
+                <a href="{% url 'courses:teacher-create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Teacher
+                </a>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h3 class="mb-0">{{ total_teachers }}</h3>
+                                    <p class="mb-0">Total Teachers</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-chalkboard-teacher fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h3 class="mb-0">{{ active_teachers }}</h3>
+                                    <p class="mb-0">Active Teachers</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-check-circle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h3 class="mb-0">{{ inactive_teachers }}</h3>
+                                    <p class="mb-0">Inactive Teachers</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-user-slash fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h3 class="mb-0">{{ departments|length }}</h3>
+                                    <p class="mb-0">Departments</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-building fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row align-items-end">
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Search Teachers</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ search_query }}" placeholder="Name, ID, or Email...">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="department" class="form-label">Department</label>
+                            <select class="form-select" id="department" name="department">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                    <option value="{{ dept }}" {% if dept == department_filter %}selected{% endif %}>
+                                        {{ dept }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="designation" class="form-label">Designation</label>
+                            <select class="form-select" id="designation" name="designation">
+                                <option value="">All Designations</option>
+                                {% for desig in designations %}
+                                    <option value="{{ desig }}" {% if desig == designation_filter %}selected{% endif %}>
+                                        {{ desig }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Teachers</option>
+                                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active Only</option>
+                                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive Only</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                    {% if has_search %}
+                        <div class="mt-2">
+                            <a href="{% url 'courses:teacher-list' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Teachers Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> Teachers List
+                        <span class="badge bg-secondary ms-2">{{ teachers|length }} Total</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if teachers %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Teacher ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Designation</th>
+                                        <th>Status</th>
+                                        <th>Subjects Assigned</th>
+                                        <th>Joined</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for teacher in teachers %}
+                                        <tr{% if not teacher.is_active %} class="table-secondary"{% endif %}>
+                                            <td>
+                                                <span class="badge bg-primary">{{ teacher.teacher_id }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ teacher.full_name }}</strong>
+                                                        {% if not teacher.is_active %}
+                                                            <span class="badge bg-danger ms-1">Inactive</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ teacher.email }}</td>
+                                            <td>
+                                                <span class="badge bg-info">{{ teacher.department }}</span>
+                                            </td>
+                                            <td>{{ teacher.designation }}</td>
+                                            <td>
+                                                {% if teacher.is_active %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle"></i> Active
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times-circle"></i> Inactive
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">{{ teacher.subjects_teaching|length }} subjects</span>
+                                            </td>
+                                            <td>{{ teacher.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{% url 'courses:teacher-detail' teacher.teacher_id %}" 
+                                                       class="btn btn-outline-primary" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'courses:teacher-edit' teacher.teacher_id %}" 
+                                                       class="btn btn-outline-success" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    
+                                                    <!-- Status Toggle Button -->
+                                                    {% if teacher.is_active %}
+                                                        <a href="{% url 'courses:toggle-teacher-status' teacher.teacher_id %}" 
+                                                           class="btn btn-outline-warning" 
+                                                           onclick="return confirm('Deactivate this teacher? They will not be able to log in.')"
+                                                           title="Deactivate Teacher">
+                                                            <i class="fas fa-user-slash"></i>
+                                                        </a>
+                                                    {% else %}
+                                                        <a href="{% url 'courses:toggle-teacher-status' teacher.teacher_id %}" 
+                                                           class="btn btn-outline-success"
+                                                           onclick="return confirm('Activate this teacher?')"
+                                                           title="Activate Teacher">
+                                                            <i class="fas fa-user-check"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                    
+                                                    <button type="button" class="btn btn-outline-danger" 
+                                                            onclick="confirmDelete('{{ teacher.teacher_id }}', '{{ teacher.full_name }}')" 
+                                                            title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if teachers.has_other_pages %}
+                            <div class="card-footer">
+                                <nav aria-label="Teachers pagination">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if teachers.has_previous %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ teachers.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if designation_filter %}&designation={{ designation_filter }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                                    Previous
+                                                </a>
+                                            </li>
+                                        {% endif %}
+
+                                        {% for num in teachers.paginator.page_range %}
+                                            {% if teachers.number == num %}
+                                                <li class="page-item active">
+                                                    <span class="page-link">{{ num }}</span>
+                                                </li>
+                                            {% elif num > teachers.number|add:'-3' and num < teachers.number|add:'3' %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if designation_filter %}&designation={{ designation_filter }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                                        {{ num }}
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+
+                                        {% if teachers.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ teachers.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if designation_filter %}&designation={{ designation_filter }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                                    Next
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-times fa-3x text-muted mb-3"></i>
+                            <h5>No Teachers Found</h5>
+                            <p class="text-muted">
+                                {% if has_search %}
+                                    No teachers match your search criteria. Try adjusting your filters.
+                                {% else %}
+                                    No teachers have been added yet. Add the first teacher to get started.
+                                {% endif %}
+                            </p>
+                            {% if not has_search %}
+                                <a href="{% url 'courses:teacher-create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Add First Teacher
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete teacher <strong id="teacherName"></strong>?</p>
+                <p class="text-danger">This action cannot be undone and will remove the teacher from all assigned subjects.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Teacher</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table-secondary {
+    opacity: 0.7;
+}
+
+.avatar-sm {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+}
+</style>
+
+<script>
+function confirmDelete(teacherId, teacherName) {
+    document.getElementById('teacherName').textContent = teacherName;
+    document.getElementById('deleteForm').action = '{% url "courses:teacher-delete" "dummy" %}'.replace('dummy', teacherId);
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+// Auto-submit form when status filter changes
+document.getElementById('status').addEventListener('change', function() {
+    if (this.value) {
+        this.closest('form').submit();
+    }
+});
+</script>
+{% endblock %}

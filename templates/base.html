@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Student Management System{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        /* Sticky Navbar Fix */
+        :root { --nav-h: 64px; } /* adjust if navbar taller/shorter */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+            background-color: #333 !important;
+        }
+        .navbar .navbar-brand,
+        .navbar .nav-link,
+        .navbar .dropdown-toggle {
+            color: white !important;
+        }
+        .navbar .nav-link:hover,
+        .navbar .dropdown-toggle:hover {
+            color: #FEB510 !important;
+        }
+        body {
+            padding-top: var(--nav-h); /* prevent content from hiding behind nav */
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #333;">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="fas fa-graduation-cap me-2"></i>
+                Student Management System
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'dashboard' %}">
+                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        
+                        {% if user.role == 'admin' or user.role == 'teacher' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'students:list' %}">
+                                <i class="fas fa-users me-1"></i>Students
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <!-- FIXED: Both admin and teacher go to Course Management -->
+                            <a class="nav-link" href="{% url 'courses:course-management' %}">
+                                <i class="fas fa-book me-1"></i>Courses
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% if user.role == 'admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'courses:teacher-list' %}">
+                                <i class="fas fa-chalkboard-teacher me-1"></i>Teachers
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% if user.role == 'teacher' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'attendance:dashboard' %}">
+                                <i class="fas fa-calendar-check me-1"></i>Attendance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'grades:dashboard' %}">
+                                <i class="fas fa-chart-line me-1"></i>Grades
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>{{ user.full_name|default:user.email }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                    <i class="fas fa-user me-2"></i>Profile
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'accounts:logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if 'error' in message.tags %}danger{% elif 'success' in message.tags %}success{% elif 'warning' in message.tags %}warning{% else %}info{% endif %} alert-dismissible fade show {% if 'auto-dismiss' in message.tags %}auto-dismiss-alert{% endif %}" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Auto-dismiss welcome messages -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss alerts with auto-dismiss-alert class after 3 seconds
+            const autoDismissAlerts = document.querySelectorAll('.auto-dismiss-alert');
+            autoDismissAlerts.forEach(function(alert) {
+                setTimeout(function() {
+                    // Use Bootstrap's alert method to close the alert
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 3000); // 3 seconds
+            });
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

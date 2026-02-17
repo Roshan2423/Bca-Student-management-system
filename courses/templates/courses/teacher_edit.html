@@ -1,0 +1,480 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit {{ teacher.full_name }} - Teacher Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {% if teacher %}
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="h3 mb-0">Edit Teacher: {{ teacher.full_name }}</h1>
+                        <p class="text-muted">Update teacher information and subject assignments</p>
+                    </div>
+                    <div>
+                        <a href="{% url 'courses:teacher-detail' teacher.teacher_id %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-eye"></i> View Profile
+                        </a>
+                        <a href="{% url 'courses:teacher-list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Teachers
+                        </a>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <!-- Teacher Edit Form -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-edit"></i> Teacher Information
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" id="editTeacherForm">
+                                    {% csrf_token %}
+                                    
+                                    <!-- Read-only Teacher Info -->
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Teacher ID</label>
+                                            <input type="text" class="form-control" value="{{ teacher.teacher_id }}" readonly>
+                                            <div class="form-text">Teacher ID cannot be changed.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Full Name</label>
+                                            <input type="text" class="form-control" 
+                                                   value="{{ teacher.first_name }} {{ teacher.last_name }}" readonly>
+                                            <div class="form-text">Name cannot be changed here.</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Editable Information -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="department" class="form-label">
+                                                    Department <span class="text-danger">*</span>
+                                                </label>
+                                                <select class="form-select" id="department" name="department" required>
+                                                    <option value="">Select Department...</option>
+                                                    {% for dept in departments %}
+                                                        <option value="{{ dept }}" {% if dept == teacher.department %}selected{% endif %}>
+                                                            {{ dept }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="designation" class="form-label">
+                                                    Designation <span class="text-danger">*</span>
+                                                </label>
+                                                <select class="form-select" id="designation" name="designation" required>
+                                                    <option value="">Select Designation...</option>
+                                                    {% for desig in designations %}
+                                                        <option value="{{ desig }}" {% if desig == teacher.designation %}selected{% endif %}>
+                                                            {{ desig }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- NEW: SALARY FIELD -->
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="salary" class="form-label">
+                                                    <i class="fas fa-money-bill-wave"></i> Monthly Salary (NPR)
+                                                </label>
+                                                <input type="number" class="form-control" id="salary" name="salary" 
+                                                       value="{{ teacher.salary|default:'' }}" 
+                                                       placeholder="Enter monthly salary" 
+                                                       step="0.01" min="0">
+                                                <div class="form-text">Monthly salary in Nepalese Rupees</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- NEW: QUALIFICATION FIELD -->
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="qualification" class="form-label">
+                                                    Qualification
+                                                </label>
+                                                <input type="text" class="form-control" id="qualification" name="qualification" 
+                                                       value="{{ teacher.qualification|default:'' }}" 
+                                                       placeholder="e.g., Master's in Computer Science">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Subject Assignment Section -->
+                                    <div class="mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-book"></i> Subject Assignment
+                                            </h6>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleSelectAll()">
+                                                <i class="fas fa-check-square"></i> Toggle All
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control" id="subjectSearch" 
+                                                   placeholder="Search subjects..." onkeyup="filterSubjects()">
+                                        </div>
+
+                                        <div class="row" id="subjectList">
+                                            {% regroup all_subjects by semester as subjects_by_semester %}
+                                            {% for semester in subjects_by_semester %}
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="card">
+                                                        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                                            <h6 class="mb-0">Semester {{ semester.grouper }}</h6>
+                                                            <small class="text-muted">{{ semester.list|length }} subjects</small>
+                                                        </div>
+                                                        <div class="card-body py-2">
+                                                            {% for subject in semester.list %}
+                                                                <div class="form-check subject-item" 
+                                                                     data-subject-name="{{ subject.subject_name|lower }}"
+                                                                     data-semester="{{ subject.semester }}">
+                                                                    <input class="form-check-input" type="checkbox" 
+                                                                           id="subject_{{ subject.subject_code }}"
+                                                                           name="subjects_teaching" 
+                                                                           value="{{ subject.subject_code }}"
+                                                                           {% if subject.subject_code in assigned_subject_codes %}checked{% endif %}>
+                                                                    <label class="form-check-label" for="subject_{{ subject.subject_code }}">
+                                                                        <small>
+                                                                            <strong>{{ subject.subject_code }}</strong><br>
+                                                                            {{ subject.subject_name }}
+                                                                            {% if subject.assigned_teacher and subject.assigned_teacher.teacher_id != teacher.teacher_id %}
+                                                                                <span class="badge bg-warning text-dark">Assigned to {{ subject.assigned_teacher.full_name }}</span>
+                                                                            {% endif %}
+                                                                        </small>
+                                                                    </label>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'courses:teacher-detail' teacher.teacher_id %}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-save"></i> Update Teacher
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Information Sidebar -->
+                    <div class="col-lg-4">
+                        <!-- Current Assignment Summary -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-info-circle"></i> Current Assignments
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="small">Currently Assigned:</span>
+                                    <span class="badge bg-primary" id="currentCount">{{ assigned_subject_codes|length }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="small">Available Subjects:</span>
+                                    <span class="badge bg-info">{{ all_subjects|length }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="small">Selected:</span>
+                                    <span class="badge bg-success" id="selectedCount">{{ assigned_subject_codes|length }}</span>
+                                </div>
+                                
+                                <hr>
+                                <small class="text-muted">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <strong>Note:</strong> Subjects with warning badges are currently assigned to other teachers and will be reassigned if selected.
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Salary Information Card -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-wallet"></i> Salary Information
+                                </h6>
+                            </div>
+                            <div class="card-body">
+    <div class="text-center">
+        {% if teacher.salary %}
+            <h4 class="text-success">Rs.{{ teacher.salary|floatformat:0 }}</h4>
+            <small class="text-muted">Monthly Salary</small>
+            <hr>
+            <small class="text-info">
+                <i class="fas fa-info-circle"></i>
+                Annual: Rs.{{ annual_salary|floatformat:0 }}
+            </small>
+        {% else %}
+            <h6 class="text-warning">No Salary Set</h6>
+            <small class="text-muted">Please set monthly salary above</small>
+        {% endif %}
+    </div>
+</div>
+
+                        </div>
+
+                        <!-- Assignment Guidelines -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-book-reader"></i> Assignment Guidelines
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="small mb-0">
+                                    <li class="mb-2">Teachers can be assigned to multiple subjects across different semesters</li>
+                                    <li class="mb-2">Each subject can only have one assigned teacher at a time</li>
+                                    <li class="mb-2">Reassigning a subject will remove it from the previous teacher</li>
+                                    <li class="mb-2">Students can only see materials from assigned teachers</li>
+                                    <li class="mb-0">Unassigned subjects remain available for future assignment</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Teacher Statistics -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chart-bar"></i> Teacher Statistics
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <h4 class="text-primary">{{ teacher.created_at|timesince }}</h4>
+                                        <small class="text-muted">Experience</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <h4 class="text-success">{{ teacher.department }}</h4>
+                                        <small class="text-muted">Department</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-bolt"></i> Quick Actions
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="selectBySemester()">
+                                    <i class="fas fa-layer-group"></i> Select by Semester
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm w-100 mb-2" onclick="selectCore()">
+                                    <i class="fas fa-star"></i> Select Core Subjects
+                                </button>
+                                <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="clearAll()">
+                                    <i class="fas fa-times"></i> Clear All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-user-times fa-3x text-muted mb-3"></i>
+                    <h5>Teacher Not Found</h5>
+                    <p class="text-muted">The requested teacher profile could not be found.</p>
+                    <a href="{% url 'courses:teacher-list' %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Teachers
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Subject search functionality
+function filterSubjects() {
+    const searchTerm = document.getElementById('subjectSearch').value.toLowerCase();
+    const subjectItems = document.querySelectorAll('.subject-item');
+    
+    subjectItems.forEach(item => {
+        const subjectName = item.getAttribute('data-subject-name');
+        if (subjectName.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Toggle select all functionality
+let allSelected = false;
+function toggleSelectAll() {
+    const checkboxes = document.querySelectorAll('input[name="subjects_teaching"]');
+    allSelected = !allSelected;
+    
+    checkboxes.forEach(checkbox => {
+        if (checkbox.closest('.subject-item').style.display !== 'none') {
+            checkbox.checked = allSelected;
+        }
+    });
+    
+    updateSelectedCount();
+}
+
+// Update selected count
+function updateSelectedCount() {
+    const selectedCheckboxes = document.querySelectorAll('input[name="subjects_teaching"]:checked');
+    document.getElementById('selectedCount').textContent = selectedCheckboxes.length;
+}
+
+// Select by semester
+function selectBySemester() {
+    const semester = prompt('Enter semester number (1-8):');
+    if (semester && semester >= 1 && semester <= 8) {
+        const checkboxes = document.querySelectorAll('input[name="subjects_teaching"]');
+        checkboxes.forEach(checkbox => {
+            const subjectItem = checkbox.closest('.subject-item');
+            if (subjectItem.getAttribute('data-semester') == semester) {
+                checkbox.checked = true;
+            }
+        });
+        updateSelectedCount();
+    }
+}
+
+// Select core subjects (typically programming and major subjects)
+function selectCore() {
+    const coreSubjects = ['programming', 'java', 'database', 'web', 'software', 'data structure'];
+    const checkboxes = document.querySelectorAll('input[name="subjects_teaching"]');
+    
+    checkboxes.forEach(checkbox => {
+        const subjectItem = checkbox.closest('.subject-item');
+        const subjectName = subjectItem.getAttribute('data-subject-name');
+        
+        if (coreSubjects.some(core => subjectName.includes(core))) {
+            checkbox.checked = true;
+        }
+    });
+    updateSelectedCount();
+}
+
+// Clear all selections
+function clearAll() {
+    const checkboxes = document.querySelectorAll('input[name="subjects_teaching"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateSelectedCount();
+}
+
+// Form validation
+document.getElementById('editTeacherForm').addEventListener('submit', function(e) {
+    const requiredFields = ['department', 'designation'];
+    let isValid = true;
+    
+    requiredFields.forEach(fieldName => {
+        const field = document.getElementById(fieldName);
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!isValid) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+    }
+});
+
+// Add event listeners to checkboxes for real-time count update
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[name="subjects_teaching"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+    
+    // Initial count
+    updateSelectedCount();
+    
+    // Format salary input
+    const salaryInput = document.getElementById('salary');
+    if (salaryInput) {
+        salaryInput.addEventListener('blur', function() {
+            if (this.value) {
+                // Format number with commas for display
+                const value = parseFloat(this.value);
+                if (!isNaN(value)) {
+                    // Don't change the actual value, just give visual feedback
+                    console.log(`Salary set to: Rs.${value.toLocaleString()}`);
+                }
+            }
+        });
+    }
+});
+
+// Warning for reassignment
+document.getElementById('editTeacherForm').addEventListener('submit', function(e) {
+    const warningSubjects = document.querySelectorAll('.badge.bg-warning');
+    const selectedWarningSubjects = [];
+    
+    warningSubjects.forEach(badge => {
+        const checkbox = badge.closest('.subject-item').querySelector('input[type="checkbox"]');
+        if (checkbox.checked) {
+            selectedWarningSubjects.push(badge.textContent);
+        }
+    });
+    
+    if (selectedWarningSubjects.length > 0) {
+        const confirmed = confirm(
+            `Warning: You are about to reassign ${selectedWarningSubjects.length} subject(s) from other teachers. ` +
+            `This will remove these subjects from their current assignments. Continue?`
+        );
+        
+        if (!confirmed) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+
+<style>
+/* Add some custom styling for the salary field */
+#salary {
+    border-left: 4px solid #28a745;
+}
+
+#salary:focus {
+    border-left-color: #20c997;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.card-header h6 i {
+    margin-right: 8px;
+}
+
+/* Highlight the salary information card */
+.card:has(#salary) {
+    border-left: 3px solid #28a745;
+}
+</style>
+{% endblock %}

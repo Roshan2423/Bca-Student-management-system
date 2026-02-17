@@ -1,0 +1,637 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Course Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-graduation-cap me-2"></i>Course Management</h2>
+            <p class="text-muted mb-0">BCA Program - Administrative Overview</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'courses:teacher-create' %}" class="btn btn-success">
+                <i class="fas fa-user-plus me-2"></i>Add Teacher
+            </a>
+            <a href="{% url 'courses:teacher-list' %}" class="btn btn-primary">
+                <i class="fas fa-users me-2"></i>Manage Teachers
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">{{ stats.total_courses }}</h3>
+                            <p class="mb-0">Total Courses</p>
+                        </div>
+                        <div class="text-primary-light">
+                            <i class="fas fa-book fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">{{ stats.active_teachers }}</h3>
+                            <p class="mb-0">Active Teachers</p>
+                        </div>
+                        <div class="text-success-light">
+                            <i class="fas fa-chalkboard-teacher fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">{{ stats.assigned_subjects }}</h3>
+                            <p class="mb-0">Assigned Subjects</p>
+                        </div>
+                        <div class="text-warning-light">
+                            <i class="fas fa-user-check fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">{{ stats.unassigned_subjects }}</h3>
+                            <p class="mb-0">Unassigned Subjects</p>
+                        </div>
+                        <div class="text-danger-light">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Overview by Semester -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-layer-group me-2"></i>BCA Subjects by Semester
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-success">{{ stats.assigned_subjects }} Assigned</span>
+                        <span class="badge bg-danger">{{ stats.unassigned_subjects }} Unassigned</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if subjects_by_semester %}
+                        <div class="accordion" id="semesterAccordion">
+                            {% for semester, subjects in subjects_by_semester.items %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="semester{{ semester }}">
+                                        <button class="accordion-button {% if semester != 1 %}collapsed{% endif %}" 
+                                                type="button" data-bs-toggle="collapse" 
+                                                data-bs-target="#collapse{{ semester }}">
+                                            <strong>Semester {{ semester }}</strong>
+                                            <span class="ms-auto me-3">
+                                                <span class="badge bg-primary">{{ subjects|length }} subjects</span>
+                                            </span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ semester }}" 
+                                         class="accordion-collapse collapse {% if semester == 1 %}show{% endif %}" 
+                                         data-bs-parent="#semesterAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                {% for subject_data in subjects %}
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card h-100 {% if not subject_data.teacher_assigned %}border-danger{% endif %}">
+                                                            <div class="card-body">
+                                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                                    <h6 class="card-title mb-0">
+                                                                        <strong>{{ subject_data.subject.subject_code }}</strong>
+                                                                    </h6>
+                                                                    {% if subject_data.teacher_assigned %}
+                                                                        <span class="badge bg-success">Assigned</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-danger">Unassigned</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <p class="card-text small mb-2">{{ subject_data.subject.subject_name }}</p>
+                                                                
+                                                                {% if subject_data.teacher_assigned %}
+                                                                    <div class="mb-2">
+                                                                        <small class="text-muted">Teacher:</small><br>
+                                                                        <strong>{{ subject_data.teacher_name }}</strong>
+                                                                        {% if subject_data.teacher_id %}
+                                                                        <a href="{% url 'courses:teacher-detail' subject_data.teacher_id %}" 
+                                                                           class="btn btn-sm btn-outline-primary ms-2">
+                                                                            <i class="fas fa-eye"></i>
+                                                                        </a>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                {% else %}
+                                                                    <div class="mb-2">
+                                                                        <small class="text-danger">No teacher assigned</small>
+                                                                    </div>
+                                                                {% endif %}
+                                                                
+                                                                <div class="d-flex justify-content-between small mb-2">
+                                                                    <span>
+                                                                        <i class="fas fa-tasks me-1"></i>
+                                                                        {{ subject_data.assignments_count }} assignments
+                                                                    </span>
+                                                                    <span>
+                                                                        <i class="fas fa-file me-1"></i>
+                                                                        {{ subject_data.materials_count }} materials
+                                                                    </span>
+                                                                </div>
+                                                                
+                                                                <div class="mt-2">
+                                                                    <a href="{% url 'courses:subject-detail' subject_data.subject.subject_code %}" 
+                                                                       class="btn btn-sm btn-outline-info">
+                                                                        <i class="fas fa-eye me-1"></i>View Details
+                                                                    </a>
+                                                                    {% if not subject_data.teacher_assigned %}
+                                                                        <a href="{% url 'courses:teacher-list' %}" 
+                                                                           class="btn btn-sm btn-danger">
+                                                                            <i class="fas fa-user-plus me-1"></i>Assign Teacher
+                                                                        </a>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No subjects found</h5>
+                            <p class="text-muted">BCA subjects will appear here when available.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar with Quick Stats and Actions -->
+        <div class="col-lg-4">
+            <!-- Teacher Management -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Teacher Management
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h4 class="text-primary">{{ stats.total_teachers }}</h4>
+                            <small class="text-muted">Total</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-success">{{ stats.active_teachers }}</h4>
+                            <small class="text-muted">Active</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-warning">{{ inactive_teachers|default:0 }}</h4>
+                            <small class="text-muted">Inactive</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'courses:teacher-list' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-list me-2"></i>View All Teachers
+                        </a>
+                        <a href="{% url 'courses:teacher-create' %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-user-plus me-2"></i>Add New Teacher
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment & Materials Stats -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Content Statistics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total Assignments:</span>
+                        <span class="badge bg-primary">{{ stats.total_assignments }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Course Materials:</span>
+                        <span class="badge bg-info">{{ stats.total_materials }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Assigned Subjects:</span>
+                        <span class="badge bg-success">{{ stats.assigned_subjects }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-tachometer-alt me-2"></i>Main Dashboard
+                        </a>
+                        <a href="{% url 'students:list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-users me-2"></i>Manage Students
+                        </a>
+                        <a href="{% url 'courses:teacher-list' %}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>Manage Teachers
+                        </a>
+                        <a href="{% url 'attendance:dashboard' %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-calendar-check me-2"></i>Attendance Reports
+                        </a>
+                        <a href="{% url 'grades:dashboard' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-chart-line me-2"></i>Grade Management
+                        </a>
+                        <hr>
+                        <a href="{% url 'students:random-forest-analysis' %}" class="btn btn-outline-danger btn-sm" 
+                           style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none;">
+                            <i class="fas fa-robot me-2"></i>🤖 Random Forest Analysis
+                        </a>
+                        <a href="{% url 'students:kmeans-clustering' %}" class="btn btn-outline-success btn-sm mt-2" 
+                           style="background: linear-gradient(45deg, #4CAF50, #45a049); color: white; border: none;">
+                            <i class="fas fa-project-diagram me-2"></i>🎯 K-Means Clustering
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-primary-light { opacity: 0.8; }
+.text-success-light { opacity: 0.8; }
+.text-warning-light { opacity: 0.8; }
+.text-danger-light { opacity: 0.8; }
+
+.card-title {
+    font-size: 0.9rem;
+}
+
+.card-text {
+    font-size: 0.85rem;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-color: rgba(13, 110, 253, 0.2);
+}
+
+.border-danger {
+    border-color: #dc3545 !important;
+    border-width: 2px !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-graduation-cap me-2"></i>Course Management</h2>
+            <p class="text-muted mb-0">BCA Program - Administrative Overview</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'courses:teacher-create' %}" class="btn btn-success">
+                <i class="fas fa-user-plus me-2"></i>Add Teacher
+            </a>
+            <a href="{% url 'courses:teacher-list' %}" class="btn btn-primary">
+                <i class="fas fa-users me-2"></i>Manage Teachers
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">{{ stats.total_courses }}</h3>
+                            <p class="mb-0">Total Courses</p>
+                        </div>
+                        <div class="text-primary-light">
+                            <i class="fas fa-book fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">{{ stats.active_teachers }}</h3>
+                            <p class="mb-0">Active Teachers</p>
+                        </div>
+                        <div class="text-success-light">
+                            <i class="fas fa-chalkboard-teacher fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">{{ stats.assigned_subjects }}</h3>
+                            <p class="mb-0">Assigned Subjects</p>
+                        </div>
+                        <div class="text-warning-light">
+                            <i class="fas fa-user-check fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">{{ stats.unassigned_subjects }}</h3>
+                            <p class="mb-0">Unassigned Subjects</p>
+                        </div>
+                        <div class="text-info-light">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Overview by Semester -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-layer-group me-2"></i>BCA Subjects by Semester
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-success">{{ stats.assigned_subjects }} Assigned</span>
+                        <span class="badge bg-warning">{{ stats.unassigned_subjects }} Unassigned</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if subjects_by_semester %}
+                        <div class="accordion" id="semesterAccordion">
+                            {% for semester, subjects in subjects_by_semester.items %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="semester{{ semester }}">
+                                        <button class="accordion-button {% if semester != 1 %}collapsed{% endif %}" 
+                                                type="button" data-bs-toggle="collapse" 
+                                                data-bs-target="#collapse{{ semester }}">
+                                            <strong>Semester {{ semester }}</strong>
+                                            <span class="ms-auto me-3">
+                                                <span class="badge bg-primary">{{ subjects|length }} subjects</span>
+                                                <span class="badge bg-success">
+                                                    {{ subjects|length|add:0 }}
+                                                    {% for subject in subjects %}
+                                                        {% if subject.teacher_assigned %}{% endif %}
+                                                    {% endfor %}
+                                                    assigned
+                                                </span>
+                                            </span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ semester }}" 
+                                         class="accordion-collapse collapse {% if semester == 1 %}show{% endif %}" 
+                                         data-bs-parent="#semesterAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                {% for subject_data in subjects %}
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card h-100 {% if not subject_data.teacher_assigned %}border-warning{% endif %}">
+                                                            <div class="card-body">
+                                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                                    <h6 class="card-title mb-0">
+                                                                        <strong>{{ subject_data.subject.subject_code }}</strong>
+                                                                    </h6>
+                                                                    {% if subject_data.teacher_assigned %}
+                                                                        <span class="badge bg-success">Assigned</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-warning">Unassigned</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <p class="card-text small mb-2">{{ subject_data.subject.subject_name }}</p>
+                                                                
+                                                                {% if subject_data.teacher_assigned %}
+                                                                    <div class="mb-2">
+                                                                        <small class="text-muted">Teacher:</small><br>
+                                                                        <strong>{{ subject_data.teacher_name }}</strong>
+                                                                        <a href="{% url 'courses:teacher-detail' subject_data.teacher_id %}" 
+                                                                           class="btn btn-sm btn-outline-primary ms-2">
+                                                                            <i class="fas fa-eye"></i>
+                                                                        </a>
+                                                                    </div>
+                                                                {% else %}
+                                                                    <div class="mb-2">
+                                                                        <small class="text-warning">No teacher assigned</small>
+                                                                    </div>
+                                                                {% endif %}
+                                                                
+                                                                <div class="d-flex justify-content-between small">
+                                                                    <span>
+                                                                        <i class="fas fa-tasks me-1"></i>
+                                                                        {{ subject_data.assignments_count }} assignments
+                                                                    </span>
+                                                                    <span>
+                                                                        <i class="fas fa-file me-1"></i>
+                                                                        {{ subject_data.materials_count }} materials
+                                                                    </span>
+                                                                </div>
+                                                                
+                                                                <div class="mt-2">
+                                                                    <a href="{% url 'courses:subject-detail' subject_data.subject.subject_code %}" 
+                                                                       class="btn btn-sm btn-outline-info">
+                                                                        <i class="fas fa-eye me-1"></i>View Details
+                                                                    </a>
+                                                                    {% if not subject_data.teacher_assigned %}
+                                                                        <a href="{% url 'courses:teacher-list' %}" 
+                                                                           class="btn btn-sm btn-warning">
+                                                                            <i class="fas fa-user-plus me-1"></i>Assign
+                                                                        </a>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No subjects found</h5>
+                            <p class="text-muted">BCA subjects will appear here when available.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar with Quick Stats and Actions -->
+        <div class="col-lg-4">
+            <!-- Teacher Management -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Teacher Management
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h4 class="text-primary">{{ stats.total_teachers }}</h4>
+                            <small class="text-muted">Total</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-success">{{ stats.active_teachers }}</h4>
+                            <small class="text-muted">Active</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-warning">{{ inactive_teachers|default:0 }}</h4>
+                            <small class="text-muted">Inactive</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'courses:teacher-list' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-list me-2"></i>View All Teachers
+                        </a>
+                        <a href="{% url 'courses:teacher-create' %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-user-plus me-2"></i>Add New Teacher
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment & Materials Stats -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Content Statistics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total Assignments:</span>
+                        <span class="badge bg-primary">{{ stats.total_assignments }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Course Materials:</span>
+                        <span class="badge bg-info">{{ stats.total_materials }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Assigned Subjects:</span>
+                        <span class="badge bg-success">{{ stats.assigned_subjects }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'students:list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-users me-2"></i>Manage Students
+                        </a>
+                        <a href="{% url 'courses:teacher-list' %}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>Manage Teachers
+                        </a>
+                        <a href="{% url 'attendance:dashboard' %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-calendar-check me-2"></i>Attendance Reports
+                        </a>
+                        <a href="{% url 'grades:dashboard' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-chart-line me-2"></i>Grade Management
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-primary-light { opacity: 0.8; }
+.text-success-light { opacity: 0.8; }
+.text-warning-light { opacity: 0.8; }
+.text-info-light { opacity: 0.8; }
+
+.card-title {
+    font-size: 0.9rem;
+}
+
+.card-text {
+    font-size: 0.85rem;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-color: rgba(13, 110, 253, 0.2);
+}
+
+.border-warning {
+    border-color: #ffc107 !important;
+    border-width: 2px !important;
+}
+</style>
+{% endblock %}

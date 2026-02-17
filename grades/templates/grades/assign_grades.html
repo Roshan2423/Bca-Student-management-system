@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assign Grades{% endblock %}
+
+{% block extra_css %}
+<style>
+    .grade-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: none;
+        margin-bottom: 20px;
+    }
+    
+    .student-grade-row {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .student-grade-row:hover {
+        border-color: #007bff;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.15);
+    }
+    
+    .student-grade-row.has-grade {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #f8fff9 0%, #ffffff 100%);
+    }
+    
+    .marks-input {
+        border-radius: 25px;
+        border: 2px solid #dee2e6;
+        padding: 10px 15px;
+        font-weight: 600;
+        text-align: center;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .marks-input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        transform: scale(1.05);
+    }
+    
+    .marks-input.pass {
+        border-color: #28a745;
+        background-color: #f8fff9;
+    }
+    
+    .marks-input.fail {
+        border-color: #dc3545;
+        background-color: #fff5f5;
+    }
+    
+    .filter-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .student-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .grade-status {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .floating-save-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+        border-radius: 50px;
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .floating-save-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+    }
+    
+    .floating-save-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="filter-section text-center">
+                <h1 class="mb-3">
+                    <i class="fas fa-plus-circle fa-2x me-3"></i>
+                    Assign Student Grades
+                </h1>
+                <p class="mb-0 fs-5">Enter exam marks for students (0-60 marks, 24+ to pass)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="grade-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>Select Exam Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Semester</label>
+                            <select name="semester" class="form-select" onchange="this.form.submit()">
+                                {% for value, label in semester_choices %}
+                                <option value="{{ value }}" {% if value == selected_semester %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label class="form-label">Exam Type</label>
+                            <select name="exam_type" class="form-select" onchange="this.form.submit()">
+                                <option value="">Select Exam Type</option>
+                                {% for exam_type in exam_types %}
+                                <option value="{{ exam_type.id }}" {% if selected_exam_type and selected_exam_type.id == exam_type.id %}selected{% endif %}>
+                                    {{ exam_type.exam_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label class="form-label">Subject</label>
+                            <select name="subject" class="form-select" onchange="this.form.submit()">
+                                <option value="">Select Subject</option>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.id }}" {% if selected_subject and selected_subject.id == subject.id %}selected{% endif %}>
+                                    {{ subject.subject_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-sync-alt me-2"></i>Load Students
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if selected_exam_type and selected_subject %}
+    <!-- Selected Details Display -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-1">
+                            <strong>Selected:</strong> {{ selected_subject.subject_name }} - {{ selected_exam_type.exam_name }}
+                        </h6>
+                        <small>Semester {{ selected_semester }} • Total Marks: {{ selected_exam_type.total_marks }} • Pass Marks: {{ selected_exam_type.pass_marks }}</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-primary fs-6">{{ students_with_grades|length }} Students</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Assignment Form -->
+    <!-- 🔧 FIXED: Added proper form method and action -->
+    <form method="post" action="" id="gradeForm">
+        {% csrf_token %}
+        <input type="hidden" name="exam_type" value="{{ selected_exam_type.id }}">
+        <input type="hidden" name="subject" value="{{ selected_subject.id }}">
+        <input type="hidden" name="semester" value="{{ selected_semester }}">
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="grade-card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list-check me-2"></i>Student Grade Assignment
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if students_with_grades %}
+                        <div class="row">
+                            {% for student_data in students_with_grades %}
+                            <div class="col-lg-6 col-xl-4">
+                                <div class="student-grade-row {% if student_data.has_grade %}has-grade{% endif %}">
+                                    <div class="row align-items-center">
+                                        <!-- Student Avatar -->
+                                        <div class="col-2">
+                                            <div class="student-avatar">
+                                                {{ student_data.student.first_name|first }}{{ student_data.student.last_name|first }}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Student Info -->
+                                        <div class="col-5">
+                                            <h6 class="mb-1 fw-bold">
+                                                {{ student_data.student.first_name }} {{ student_data.student.last_name }}
+                                            </h6>
+                                            <small class="text-muted">{{ student_data.student.student_id }}</small><br>
+                                            {% if student_data.current_grade %}
+                                            <span class="grade-status {% if student_data.current_grade.is_pass %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                                                Current: {{ student_data.current_grade.marks_obtained }}/60
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Marks Input -->
+                                        <div class="col-5">
+                                            <input type="number" 
+                                                   name="marks_{{ student_data.student.id }}" 
+                                                   class="form-control marks-input"
+                                                   placeholder="0-60"
+                                                   min="0" 
+                                                   max="60"
+                                                   value="{% if student_data.current_grade %}{{ student_data.current_grade.marks_obtained }}{% endif %}"
+                                                   data-student-id="{{ student_data.student.id }}"
+                                                   oninput="updateGradeStatus(this)">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Remarks -->
+                                    <div class="row mt-2">
+                                        <div class="col-12">
+                                            <input type="text" 
+                                                   class="form-control form-control-sm" 
+                                                   name="remarks_{{ student_data.student.id }}" 
+                                                   placeholder="Optional remarks..."
+                                                   value="{% if student_data.current_grade %}{{ student_data.current_grade.remarks }}{% endif %}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Students Found</h5>
+                            <p class="text-muted">Please select exam type and subject to load students.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+
+    <!-- Navigation -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{% url 'grades:dashboard' %}" class="btn btn-outline-secondary btn-lg me-3">
+                <i class="fas fa-arrow-left me-2"></i>Back to Grade Dashboard
+            </a>
+            <a href="{% url 'grades:reports' %}" class="btn btn-outline-info btn-lg">
+                <i class="fas fa-chart-bar me-2"></i>View Reports
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if selected_exam_type and selected_subject and students_with_grades %}
+<!-- Floating Save Button -->
+<button type="button" class="btn btn-success floating-save-btn" onclick="saveGrades()" id="saveBtn">
+    <i class="fas fa-save me-2"></i>Save Grades
+    <span class="badge bg-light text-success ms-2" id="gradeCount">0</span>
+</button>
+{% endif %}
+
+<!-- 🔧 FIXED: Moved JavaScript to proper block and added missing functionality -->
+<script>
+// Update grade status based on marks input
+function updateGradeStatus(input) {
+    const marks = parseInt(input.value) || 0;
+    
+    // Remove existing classes
+    input.classList.remove('pass', 'fail');
+    
+    // Add appropriate class
+    if (marks >= 24) {
+        input.classList.add('pass');
+    } else if (marks > 0) {
+        input.classList.add('fail');
+    }
+    
+    updateGradeCounter();
+}
+
+// Update grade counter
+function updateGradeCounter() {
+    const inputs = document.querySelectorAll('.marks-input');
+    let gradeCount = 0;
+    
+    inputs.forEach(input => {
+        if (input.value && input.value.trim() !== '') {
+            gradeCount++;
+        }
+    });
+    
+    const counter = document.getElementById('gradeCount');
+    if (counter) {
+        counter.textContent = gradeCount;
+    }
+    
+    // Enable/disable save button
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+        saveBtn.disabled = gradeCount === 0;
+    }
+}
+
+// 🔧 FIXED: Improved save grades function
+function saveGrades() {
+    const inputs = document.querySelectorAll('.marks-input');
+    let hasGrades = false;
+    let invalidGrades = false;
+    let gradeCount = 0;
+    
+    // Validate grades
+    inputs.forEach(input => {
+        if (input.value && input.value.trim() !== '') {
+            hasGrades = true;
+            gradeCount++;
+            const marks = parseInt(input.value);
+            if (marks < 0 || marks > 60) {
+                invalidGrades = true;
+            }
+        }
+    });
+    
+    if (!hasGrades) {
+        alert('Please enter at least one grade before saving.');
+        return;
+    }
+    
+    if (invalidGrades) {
+        alert('Please ensure all marks are between 0 and 60.');
+        return;
+    }
+    
+    // Confirmation dialog
+    if (!confirm(`Are you sure you want to save ${gradeCount} grades?`)) {
+        return;
+    }
+    
+    // Show loading state
+    const saveBtn = document.getElementById('saveBtn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+    saveBtn.disabled = true;
+    
+    // Submit form
+    try {
+        document.getElementById('gradeForm').submit();
+    } catch (error) {
+        console.error('Form submission error:', error);
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+        alert('Error submitting form. Please try again.');
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Update status for existing grades
+    document.querySelectorAll('.marks-input').forEach(input => {
+        if (input.value) {
+            updateGradeStatus(input);
+        }
+        
+        // Add event listener for real-time updates
+        input.addEventListener('input', function() {
+            updateGradeStatus(this);
+        });
+    });
+    
+    updateGradeCounter();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        saveGrades();
+    }
+});
+</script>
+{% endblock %}

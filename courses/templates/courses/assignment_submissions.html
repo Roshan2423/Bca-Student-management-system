@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% if is_active_assignments_view %}
+Active Assignments - {{ subject.subject_name }}
+{% else %}
+Assignment Submissions - {{ subject.subject_name }}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        {% if is_active_assignments_view %}
+                            <i class="fas fa-tasks text-primary"></i> Active Assignments
+                        {% else %}
+                            <i class="fas fa-file-alt text-info"></i> Assignment Submissions
+                        {% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {{ subject.subject_name }} ({{ subject.subject_code }}) - Semester {{ subject.semester }}
+                    </p>
+                </div>
+                <a href="{% url 'courses:teacher-dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <ul class="nav nav-pills">
+                        {% for value, label in filter_options %}
+                        <li class="nav-item">
+                            <a href="{% url 'courses:subject-submissions' subject.subject_code %}?status={{ value }}" 
+                               class="nav-link {% if status_filter == value %}active{% endif %}">
+                                {{ label }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">{{ total_assignments }}</h5>
+                            <p class="card-text">Total Assignments</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">{{ total_submissions }}</h5>
+                            <p class="card-text">Total Submissions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">{{ pending_submissions }}</h5>
+                            <p class="card-text">Pending Review</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">{{ graded_submissions }}</h5>
+                            <p class="card-text">Graded</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Based on View Type -->
+            {% if status_filter == 'active' %}
+                <!-- Active Assignments View -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tasks"></i> Active Assignments
+                            <span class="badge bg-primary ms-2">{{ active_assignments_data|length }}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if active_assignments_data %}
+                            <div class="row">
+                                {% for assignment_data in active_assignments_data %}
+                                <div class="col-lg-6 col-md-12 mb-4">
+                                    <div class="card border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-file-alt"></i> {{ assignment_data.title }}
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="card-text">{{ assignment_data.description }}</p>
+                                            
+                                            <div class="row text-center mb-3">
+                                                <div class="col-4">
+                                                    <small class="text-muted">Created</small>
+                                                    <div class="fw-bold">{{ assignment_data.created_date|date:"M d" }}</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">Due Date</small>
+                                                    <div class="fw-bold text-warning">{{ assignment_data.due_date|date:"M d, Y" }}</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">Days Left</small>
+                                                    <div class="fw-bold text-success">
+                                                        {{ assignment_data.due_date|timeuntil }}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row text-center">
+                                                <div class="col-4">
+                                                    <small class="text-muted">Total</small>
+                                                    <div class="badge bg-info">{{ assignment_data.total_submissions }}</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">Pending</small>
+                                                    <div class="badge bg-warning">{{ assignment_data.pending_submissions }}</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">Graded</small>
+                                                    <div class="badge bg-success">{{ assignment_data.graded_submissions }}</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-3">
+                                                <a href="{% url 'courses:subject-submissions' subject.subject_code %}?assignment_id={{ assignment_data.assignment.id }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> View Submissions
+                                                </a>
+                                                <a href="{% url 'courses:subject-detail' subject.subject_code %}" 
+                                                   class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-edit"></i> Manage Assignment
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Active Assignments</h5>
+                                <p class="text-muted">All assignments for this subject have passed their due date or there are no assignments created yet.</p>
+                                <a href="{% url 'courses:create-assignment' subject.subject_code %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create New Assignment
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <!-- Submissions View -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-alt"></i> 
+                            {% if status_filter == 'pending' %}
+                                Pending Submissions
+                            {% elif status_filter == 'all' %}
+                                All Submissions
+                            {% else %}
+                                Assignment Submissions
+                            {% endif %}
+                            <span class="badge bg-info ms-2">{{ submissions_data|length }}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if submissions_data %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Assignment</th>
+                                            <th>Submitted</th>
+                                            <th>Status</th>
+                                            <th>Grade</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for submission_data in submissions_data %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-primary rounded-circle text-white d-flex align-items-center justify-content-center me-2">
+                                                        {{ submission_data.student_name|slice:":1" }}
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold">{{ submission_data.student_name }}</div>
+                                                        <small class="text-muted">{{ submission_data.student_id }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold">{{ submission_data.assignment_title }}</div>
+                                            </td>
+                                            <td>
+                                                <div>{{ submission_data.submitted_date|date:"M d, Y" }}</div>
+                                                <small class="text-muted">{{ submission_data.submitted_date|time:"H:i" }}</small>
+                                            </td>
+                                            <td>
+                                                {% if submission_data.status == 'submitted' %}
+                                                    <span class="badge bg-warning">Pending Review</span>
+                                                {% elif submission_data.status == 'graded' %}
+                                                    <span class="badge bg-success">Graded</span>
+                                                {% elif submission_data.is_late %}
+                                                    <span class="badge bg-danger">Late Submission</span>
+                                                {% else %}
+                                                    <span class="badge bg-info">{{ submission_data.status|title }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if submission_data.grade %}
+                                                    <span class="badge bg-success">{{ submission_data.grade }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">Not graded</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="#" class="btn btn-sm btn-outline-info" title="View Submission">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="#" class="btn btn-sm btn-outline-success" title="Grade">
+                                                        <i class="fas fa-star"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Submissions Found</h5>
+                                <p class="text-muted">
+                                    {% if status_filter == 'pending' %}
+                                        No pending submissions for review.
+                                    {% else %}
+                                        No submissions found for this subject.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-sm {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.card {
+    border: 1px solid #e3e6f0;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #007bff;
+}
+
+.border-primary {
+    border-color: #007bff !important;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #5a5c69;
+}
+</style>
+{% endblock %}

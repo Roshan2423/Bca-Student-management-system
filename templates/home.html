@@ -1,0 +1,438 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - Student Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #f5f5f5;
+        min-height: 100vh;
+        margin: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+    
+    .hero-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 60px 40px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        background-image: url('{% static "images/Whitefield-International-College.jpg" %}');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-blend-mode: overlay;
+
+    }
+    
+    .hero-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.5);
+        z-index: 1;
+    }
+    
+    .hero-card > * {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #FEB510;
+        z-index: 3;
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #2c2c2c;
+        margin-bottom: 20px;
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.3rem;
+        color: #64748b;
+        margin-bottom: 40px;
+        font-weight: 500;
+    }
+    
+    .hero-icon {
+        width: 80px;
+        height: 80px;
+        background: #FEB510;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .action-btn {
+        background: #FEB510;
+        color: white;
+        border: none;
+        padding: 16px 32px;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        margin: 0 10px;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .welcome-badge {
+        background: #2c2c2c;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-weight: 600;
+        margin-top: 20px;
+        display: inline-block;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .features-section {
+        margin-top: 60px;
+    }
+    
+    .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c2c2c;
+        margin-bottom: 50px;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 30px;
+        margin-bottom: 60px;
+    }
+    
+    .feature-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 40px 30px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon.students {
+        background: #FEB510;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon.courses {
+        background: #2c2c2c;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon.attendance {
+        background: #FEB510;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon.grades {
+        background: #2c2c2c;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 15px;
+    }
+    
+    .feature-description {
+        color: #64748b;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+    
+    .security-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 50px 40px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    
+    .security-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .security-description {
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-bottom: 40px;
+        line-height: 1.6;
+    }
+    
+    .security-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+    }
+    
+    .security-feature {
+        text-align: center;
+    }
+    
+    .security-feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 20px;
+    }
+    
+    .security-feature-icon.lock {
+        background: #FEB510;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .security-feature-icon.admin {
+        background: #2c2c2c;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .security-feature-icon.academic {
+        background: #FEB510;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .security-feature-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 10px;
+    }
+    
+    .security-feature-text {
+        color: #64748b;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-card {
+            padding: 40px 25px;
+        }
+        
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem;
+        }
+        
+        .features-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .action-btn {
+            padding: 14px 28px;
+            font-size: 1rem;
+            margin: 5px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <!-- Hero Section -->
+    <div class="hero-card">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 30px;">
+            <div class="hero-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <span style="font-size: 2.6rem; font-weight: 900; background: linear-gradient(135deg, #FEB510 0%, #ff8c00 50%, #2c2c2c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: 'Arial Black', 'Helvetica', sans-serif; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); line-height: 1; margin: 0; padding: 0; transform: translateY(-8px); display: inline-block; text-transform: uppercase; position: relative;">Jupiter Edu</span>
+        </div>
+        <h1 class="hero-title">Student Management System</h1>
+        <p class="hero-subtitle">Comprehensive solution for managing students, courses, attendance, and grades</p>
+        
+        {% if not user.is_authenticated %}
+            <div>
+                <a class="action-btn" href="{% url 'accounts:login' %}">
+                    <i class="fas fa-sign-in-alt"></i>Login to System
+                </a>
+                <div style="margin-top: 25px; color: #64748b; font-size: 0.95rem;">
+                    <i class="fas fa-shield-alt" style="margin-right: 8px; color: #FEB510;"></i>
+                    All accounts are managed by system administrators
+                </div>
+            </div>
+        {% else %}
+            <div>
+                <a class="action-btn" href="{% url 'dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>Go to Dashboard
+                </a>
+                <div class="welcome-badge">
+                    Welcome back, {{ user.full_name|default:user.email }}!
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Features Section -->
+    <div class="features-section">
+        <h2 class="section-title">Key Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon students">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="feature-title">Student Management</h3>
+                <p class="feature-description">Comprehensive student profiles with academic records and personal information management.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon courses">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h3 class="feature-title">Course Management</h3>
+                <p class="feature-description">Organize courses, assign teachers, and manage student enrollments efficiently.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon attendance">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h3 class="feature-title">Attendance Tracking</h3>
+                <p class="feature-description">Real-time attendance marking with detailed reports and analytics dashboard.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon grades">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="feature-title">Grade Management</h3>
+                <p class="feature-description">Complete grading system with GPA calculation and transcript generation.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Section -->
+    {% if not user.is_authenticated %}
+    <div class="security-section">
+        <h3 class="security-title">
+            <i class="fas fa-shield-alt" style="color: #FEB510;"></i>
+            Secure Admin-Managed System
+        </h3>
+        <p class="security-description">
+            All user accounts are created and managed by system administrators. 
+            Contact your administrator for login credentials.
+        </p>
+        
+        <div class="security-features">
+            <div class="security-feature">
+                <div class="security-feature-icon lock">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h4 class="security-feature-title">Secure Access</h4>
+                <p class="security-feature-text">Password-protected accounts with role-based permissions</p>
+            </div>
+            
+            <div class="security-feature">
+                <div class="security-feature-icon admin">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <h4 class="security-feature-title">Admin Control</h4>
+                <p class="security-feature-text">Complete user management by system administrators</p>
+            </div>
+            
+            <div class="security-feature">
+                <div class="security-feature-icon academic">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h4 class="security-feature-title">Academic Focus</h4>
+                <p class="security-feature-text">Purpose-built for educational institutions</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

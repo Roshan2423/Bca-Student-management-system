@@ -1,0 +1,488 @@
+<!-- Updated templates/dashboard/main.html - Removed Financial Management Overview -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Student Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                    <p class="text-muted">Welcome back, {{ user.first_name }} {{ user.last_name }}!</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-success fs-6">{{ user.role|title }}</span>
+                    <span class="badge bg-info fs-6">Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards - Simplified -->
+    <div class="row mb-4">
+        <!-- Total Students -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Students
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalStudents">
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Students -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Students
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeStudents">
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Teachers -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Teachers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeTeachers">
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chalkboard-teacher fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Courses -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Courses
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalCourses">
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-book fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{% url 'students:create' %}" class="btn btn-success btn-lg w-100">
+                                <i class="fas fa-user-plus"></i><br>
+                                <small>Add Student</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{% url 'courses:teacher-create' %}" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-chalkboard-teacher"></i><br>
+                                <small>Add Teacher</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{% url 'courses:fee-management' %}" class="btn btn-warning btn-lg w-100">
+                                <i class="fas fa-money-bill-wave"></i><br>
+                                <small>Manage Fees</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{% url 'courses:salary-management' %}" class="btn btn-info btn-lg w-100">
+                                <i class="fas fa-wallet"></i><br>
+                                <small>Manage Salary</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{% url 'attendance:dashboard' %}" class="btn btn-secondary btn-lg w-100">
+                                <i class="fas fa-calendar-check"></i><br>
+                                <small>Attendance</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{% url 'grades:dashboard' %}" class="btn btn-dark btn-lg w-100">
+                                <i class="fas fa-graduation-cap"></i><br>
+                                <small>Grades</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{% url 'students:random-forest-analysis' %}" class="btn btn-lg w-100" 
+                               style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none;">
+                                <i class="fas fa-robot"></i><br>
+                                <small>🤖 Random Forest Analysis</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{% url 'students:kmeans-clustering' %}" class="btn btn-lg w-100" 
+                               style="background: linear-gradient(45deg, #4CAF50, #45a049); color: white; border: none;">
+                                <i class="fas fa-project-diagram"></i><br>
+                                <small>🎯 K-Means Clustering</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Sections -->
+    <div class="row">
+        <!-- Student Management -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-users"></i> Student Management
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Manage student records, enrollment, and academic information.</p>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'students:list' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> View All
+                        </a>
+                        <a href="{% url 'students:create' %}" class="btn btn-outline-success">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Management -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chalkboard-teacher"></i> Teacher Management
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Manage teacher profiles, assign subjects, and set teaching permissions.</p>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'courses:teacher-list' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> View All
+                        </a>
+                        <a href="{% url 'courses:teacher-create' %}" class="btn btn-outline-success">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Management -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-book"></i> Course Management
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">View BCA subjects, assign teachers, and manage course materials.</p>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'courses:course-management' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> View Courses
+                        </a>
+                        <!-- REMOVED: Dashboard button that was highlighted -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fee Management -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow border-left-warning">
+                <div class="card-header py-3 bg-warning-subtle">
+                    <h6 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-money-bill-wave"></i> Fee Management
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Track student fee payments (Rs.50,000 per semester) and manage payment records.</p>
+                    <div class="d-flex gap-2 mb-2">
+                        <a href="{% url 'courses:fee-management' %}" class="btn btn-warning w-100">
+                            <i class="fas fa-money-check-alt"></i> Manage Student Fees
+                        </a>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> Total Program Fee: Rs.400,000 (8 semesters)
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Salary Management -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow border-left-info">
+                <div class="card-header py-3 bg-info-subtle">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-wallet"></i> Salary Management
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Track teacher monthly salary payments and manage payroll records.</p>
+                    <div class="d-flex gap-2 mb-2">
+                        <a href="{% url 'courses:salary-management' %}" class="btn btn-info w-100">
+                            <i class="fas fa-hand-holding-usd"></i> Manage Teacher Salaries
+                        </a>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-calendar-alt"></i> Monthly Payroll System
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Management -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-secondary">
+                        <i class="fas fa-calendar-check"></i> Attendance Management
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Track student attendance and generate attendance reports.</p>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'attendance:reports' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-eye"></i> View Reports
+                        </a>
+                        <a href="{% url 'attendance:dashboard' %}" class="btn btn-outline-info">
+                            <i class="fas fa-check"></i> Mark Attendance
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grades Management -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-dark">
+                        <i class="fas fa-graduation-cap"></i> Grades Management
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Enter and manage student grades across all subjects and semesters.</p>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'grades:dashboard' %}" class="btn btn-outline-dark">
+                            <i class="fas fa-plus"></i> Enter Grades
+                        </a>
+                        <a href="{% url 'grades:reports' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-chart-bar"></i> View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Statistics -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow border-left-success">
+                <div class="card-header py-3 bg-success-subtle">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-chart-pie"></i> System Overview
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-2">
+                            <div class="h6 text-primary" id="dashboardTotalStudents">-</div>
+                            <small class="text-muted">Students</small>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <div class="h6 text-success" id="dashboardActiveTeachers">-</div>
+                            <small class="text-muted">Teachers</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h6 text-info" id="dashboardTotalCourses">-</div>
+                            <small class="text-muted">Courses</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h6 text-warning">33</div>
+                            <small class="text-muted">BCA Subjects</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REMOVED: Financial Overview Row (entire section was here) -->
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+
+/* Custom background colors for sections */
+.bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.bg-info-subtle {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+}
+
+.bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+}
+
+/* Hover effects for management cards */
+.card:hover {
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+.card .btn:hover {
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+
+/* Special styling for financial cards */
+.border-left-warning .card-body,
+.border-left-info .card-body {
+    background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(248,249,250,0.9) 100%);
+}
+</style>
+
+<script>
+// Load real dashboard statistics with auto-refresh when status changes
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+    
+    // Refresh stats every 30 seconds to catch status changes
+    setInterval(loadDashboardStats, 30000);
+});
+
+function loadDashboardStats() {
+    // Fetch student statistics
+    fetch('/students/api/stats/')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('totalStudents').textContent = data.total_students || 0;
+            document.getElementById('activeStudents').textContent = data.active_students || 0;
+            
+            // Update system overview
+            document.getElementById('dashboardTotalStudents').textContent = data.total_students || 0;
+        })
+        .catch(error => {
+            document.getElementById('totalStudents').textContent = '0';
+            document.getElementById('activeStudents').textContent = '0';
+            document.getElementById('dashboardTotalStudents').textContent = '0';
+        });
+    
+    // Fetch course and teacher statistics  
+    fetch('/courses/api/stats/')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('totalCourses').textContent = data.total_courses || 0;
+            document.getElementById('activeTeachers').textContent = data.active_teachers || 0;
+            
+            // Update system overview
+            document.getElementById('dashboardActiveTeachers').textContent = data.active_teachers || 0;
+            document.getElementById('dashboardTotalCourses').textContent = data.total_courses || 0;
+        })
+        .catch(error => {
+            document.getElementById('totalCourses').textContent = '0';
+            document.getElementById('activeTeachers').textContent = '0';
+            document.getElementById('dashboardActiveTeachers').textContent = '0';
+            document.getElementById('dashboardTotalCourses').textContent = '0';
+        });
+}
+
+// Function to refresh stats when called from other pages
+window.refreshDashboardStats = loadDashboardStats;
+
+// Add loading animation
+function showLoadingAnimation() {
+    const elements = ['totalStudents', 'activeStudents', 'activeTeachers', 'totalCourses'];
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+    });
+}
+
+// Show loading on page refresh
+document.addEventListener('DOMContentLoaded', function() {
+    showLoadingAnimation();
+    setTimeout(loadDashboardStats, 500); // Small delay for better UX
+});
+</script>
+{% endblock %}
